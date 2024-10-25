@@ -12,11 +12,15 @@ license.workspace = true
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 everscale-types = { workspace = true }
+futures-util = { workspace = true }
 parking_lot = { workspace = true }
 rand = { workspace = true }
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["gzip", "http2", "json"] }
+serde = { workspace = true }
+serde_json = { workspace = true, features = ["raw_value"] }
+thiserror = { workspace = true }
 tokio = { workspace = true }
 
 # local deps
 nekoton-core = { workspace = true }
-serde = { version = "1.0.213", features = ["derive"] }
+nekoton-utils = { workspace = true }
