@@ -1,0 +1,22 @@
+[package]
+name = "nekoton-transport"
+description = "TODO"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+everscale-types = { workspace = true }
+parking_lot = { workspace = true }
+rand = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+
+# local deps
+nekoton-core = { workspace = true }
+serde = { version = "1.0.213", features = ["derive"] }

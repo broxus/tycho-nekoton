@@ -1,0 +1,13 @@
+/.idea/
+/.vscode/
+/target/
+/**/*.rs.bk
+Cargo.lock
+
+nekoton/.idea/
+
+nekoton/target/
+node_modules/
+dist/
+
+/**/.DS_Store

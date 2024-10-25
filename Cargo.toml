@@ -1,0 +1,33 @@
+[workspace.package]
+version = "0.0.1"
+edition = "2021"
+authors = ["Broxus Team"]
+rust-version = "1.80.0"
+repository = "https://github.com/broxus/nekoton"
+license = "MIT"
+
+[workspace]
+resolver = "2"
+members = [
+    "core",
+    "transport",
+    "utils",
+]
+
+[workspace.dependencies]
+# crates.io deps
+anyhow = "1.0"
+async-trait = "0.1"
+everscale-crypto = { version = "0.2", features = ["tl-proto", "serde"] }
+everscale-types = { version = "0.1.0-rc.6", features = ["tycho"] }
+parking_lot = { version = "0.12.1" }
+rand = "0.8"
+reqwest = { version = "0.12", features = ["json", "gzip", "rustls-tls"], default-features = false }
+serde = "1.0"
+serde_json = "1.0"
+tokio = { version = "1", default-features = false }
+
+# local deps
+nekoton-core = { path = "./core" }
+nekoton-transport = { path = "./transport" }
+nekoton-utils = { path = "./utils" }
