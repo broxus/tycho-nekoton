@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use everscale_types::models::*;
 use everscale_types::prelude::*;
-use nekoton_core::transport::{ContractState, Transport};
+use nekoton_core::transport::{ContractState, LatestBlockchainConfig, Transport};
 use parking_lot::Mutex;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
@@ -107,6 +107,14 @@ impl Transport for JrpcClient {
         self.post(&JrpcRequest {
             method: "getContractState",
             params: &Params { address },
+        })
+        .await
+    }
+
+    async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
+        self.post(&JrpcRequest {
+            method: "getBlockchainConfig",
+            params: &(),
         })
         .await
     }

@@ -1,8 +1,7 @@
 use everscale_types::models::*;
 use everscale_types::prelude::*;
-use serde::{Deserialize, Serialize};
-
 use nekoton_utils::serde_helpers;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
@@ -61,4 +60,13 @@ pub struct LastTransactionId {
     #[serde(with = "serde_helpers::string")]
     pub lt: u64,
     pub hash: HashBytes,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LatestBlockchainConfig {
+    pub global_id: i32,
+    pub seqno: u32,
+    #[serde(with = "BocRepr")]
+    pub config: BlockchainConfig,
 }

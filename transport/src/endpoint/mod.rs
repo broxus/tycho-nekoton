@@ -1,6 +1,6 @@
 use everscale_types::cell::DynCell;
 use everscale_types::models::StdAddr;
-use nekoton_core::transport::{ContractState, Transport};
+use nekoton_core::transport::{ContractState, LatestBlockchainConfig, Transport};
 use reqwest::Url;
 
 use crate::models::Timings;
@@ -26,6 +26,13 @@ impl Transport for Endpoint {
     async fn get_contract_state(&self, address: &StdAddr) -> anyhow::Result<ContractState> {
         match &self {
             Self::Jrpc(client) => client.get_contract_state(address).await,
+            Self::Proto => todo!(),
+        }
+    }
+
+    async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
+        match &self {
+            Self::Jrpc(client) => client.get_config().await,
             Self::Proto => todo!(),
         }
     }

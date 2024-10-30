@@ -6,7 +6,7 @@ use std::time::Duration;
 use everscale_types::cell::DynCell;
 use everscale_types::models::StdAddr;
 use futures_util::StreamExt;
-use nekoton_core::transport::{ContractState, Transport};
+use nekoton_core::transport::{ContractState, LatestBlockchainConfig, Transport};
 use parking_lot::RwLock;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
@@ -166,6 +166,11 @@ impl Transport for RpcClient {
 
     async fn get_contract_state(&self, address: &StdAddr) -> anyhow::Result<ContractState> {
         self.with_retries(|client| async move { client.get_contract_state(address).await })
+            .await
+    }
+
+    async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
+        self.with_retries(|client| async move { client.get_config().await })
             .await
     }
 }
