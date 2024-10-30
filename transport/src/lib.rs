@@ -25,14 +25,14 @@ pub struct RpcClient {
     inner: Arc<Inner>,
 }
 
-pub struct Inner {
+struct Inner {
     endpoints: Vec<Endpoint>,
     live_endpoints: RwLock<Vec<Endpoint>>,
     options: ClientOptions,
 }
 
 impl RpcClient {
-    async fn new<I: IntoIterator<Item = Url> + Send>(
+    pub async fn new<I: IntoIterator<Item = Url> + Send>(
         endpoints: I,
         options: ClientOptions,
     ) -> anyhow::Result<Self> {

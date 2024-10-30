@@ -8,7 +8,7 @@
 
 ## About
 
-Broxus SDK with TIP3 wallets support and a bunch of helpers.
+Broxus SDK
 
 ## Usage
 
