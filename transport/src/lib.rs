@@ -282,4 +282,26 @@ mod test {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn get_config_test() -> Result<()> {
+        let endpoints = ["http://57.129.53.62:8080/rpc"]
+            .iter()
+            .map(|x| x.parse().unwrap())
+            .collect::<Vec<_>>();
+
+        let client = RpcClient::new(
+            endpoints,
+            ClientOptions {
+                probe_interval: Duration::from_secs(10),
+                ..Default::default()
+            },
+        )
+        .await?;
+
+        let config = client.get_config().await?;
+        assert_eq!(config.global_id, 2000);
+
+        Ok(())
+    }
 }
