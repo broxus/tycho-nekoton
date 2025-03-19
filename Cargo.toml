@@ -37,3 +37,6 @@ tycho-vm = { git = "https://github.com/broxus/tycho-vm.git" }
 nekoton-core = { path = "./core" }
 nekoton-transport = { path = "./transport" }
 nekoton-utils = { path = "./utils" }
+
+[patch.crates-io]
+everscale-types = { git = "https://github.com/broxus/everscale-types.git", rev = "30643919b60272a88f928005cd252bc811c72ebc" }

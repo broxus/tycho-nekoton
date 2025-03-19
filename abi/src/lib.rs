@@ -1,46 +1,27 @@
-mod executor;
+mod execution_context;
+mod function_ext;
+mod local_executor;
 
-use anyhow::Result;
-use everscale_types::abi::{AbiValue, Function};
-use nekoton_utils::time::{Clock, SimpleClock};
+pub mod tests {
+    use crate::execution_context::ExecutionContextBuilder;
+    use crate::function_ext::FunctionExt;
+    use everscale_types::abi::{AbiVersion, Function};
+    use everscale_types::cell::HashBytes;
+    use everscale_types::models::BlockchainConfig;
+    use nekoton_utils::time::SimpleClock;
 
-#[derive(Copy, Clone)]
-pub struct ExecutionContext<'a> {
-    pub clock: &'a dyn Clock,
-}
-
-impl<'a> ExecutionContext<'a> {
-    pub fn run_local(&self, function: &Function, values: &[AbiValue]) -> Result<()> {
-        self.run(function, values, false)
-    }
-
-    pub fn run_local_responsible(&self, function: &Function, values: &[AbiValue]) -> Result<()> {
-        self.run(function, values, true)
-    }
-
-    fn run(&self, function: &Function, values: &[AbiValue], responsible: bool) -> Result<()> {}
-}
-
-pub struct ExecutionContextBuilder<'a> {
-    pub clock: Option<&'a dyn Clock>,
-}
-
-impl ExecutionContextBuilder {
-    pub fn new() -> ExecutionContextBuilder {
-        Self {
-            clock: None,
-        }
-    }
-
-    pub fn with_clock(mut self, clock: &dyn Clock) -> Self {
-        self.clock = Some(clock);
-        Self
-    }
-
-
-    pub fn build(&self) -> ExecutionContext {
-        ExecutionContext {
-            clock: self.clock.unwrap_or(&SimpleClock),
-        }
+    #[test]
+    fn test() {
+        let config = BlockchainConfig::new_empty(Default::default());
+        let function = Function::builder(AbiVersion::V2_2, "test").build();
+        let execution_context = ExecutionContextBuilder::new(Default::default())
+            .with_rand_seed(HashBytes::default())
+            .with_clock(&SimpleClock)
+            .build();
+        let values = vec![];
+        let output = execution_context
+            .run_local(&function, values.as_slice(), config)
+            .unwrap();
+        println!("{:?}", output);
     }
 }
