@@ -69,18 +69,18 @@ impl<'a> ExecutionContextBuilder<'a> {
         }
     }
 
-    pub fn with_clock(mut self, clock: &dyn Clock) -> Self {
+    pub fn with_clock(mut self, clock: &'a dyn Clock) -> Self {
         self.clock = Some(clock);
-        Self
+        self
     }
     pub fn with_rand_seed(mut self, rand_seed: HashBytes) -> Self {
         self.rand_seed = Some(rand_seed);
-        Self
+        self
     }
 
     pub fn with_libraries(mut self, libraries: Dict<HashBytes, LibDescr>) -> Self {
         self.libraries = libraries;
-        Self
+        self
     }
 
     pub fn build(self) -> ExecutionContext<'a> {
@@ -124,7 +124,7 @@ impl MessageBuilder {
 
     pub fn with_body<T: IntoMessageBody>(mut self, body: T) -> anyhow::Result<Self> {
         self.body = body.into_message_body()?;
-        Ok(Self)
+        Ok(self)
     }
 
     pub fn build(&self) -> OwnedMessage {

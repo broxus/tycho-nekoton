@@ -1,13 +1,11 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use everscale_types::abi::{AbiValue, Function, NamedAbiValue};
 use everscale_types::cell::HashBytes;
-use everscale_types::models::{
-    Account, BlockchainConfig, LibDescr,
-    RelaxedMsgInfo,
-};
+use everscale_types::models::{Account, BlockchainConfig, LibDescr, RelaxedMsgInfo};
 use everscale_types::num::Tokens;
 use everscale_types::prelude::Dict;
 use nekoton_utils::time::Clock;
+use num_traits::cast::ToPrimitive;
 use tycho_vm::{BehaviourModifiers, OwnedCellSlice};
 
 use crate::execution_context::MessageBuilder;
@@ -44,7 +42,7 @@ impl FunctionExt for Function {
                 Some(AbiValue::Uint(32, number)) => {
                     let answer_id = number
                         .to_u32()
-                        .ok_or_else(|| anyhow::bail!("Invalid abi value"))?;
+                        .ok_or_else(|| anyhow!("Invalid abi value"))?;
                     Some(answer_id)
                 }
                 _ => anyhow::bail!("Invalid abi"),
@@ -103,8 +101,9 @@ impl FunctionExt for Function {
                     continue;
                 }
 
-
-                if let Ok(values) = NamedAbiValue::load_tuple(self.outputs.as_ref(), self.abi_version, &mut slice) {
+                if let Ok(values) =
+                    NamedAbiValue::load_tuple(self.outputs.as_ref(), self.abi_version, &mut slice)
+                {
                     output = Some(values);
                     break;
                 }
