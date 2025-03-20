@@ -1,8 +1,7 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result};
 use everscale_types::cell::{Cell, CellBuilder, HashBytes};
-use everscale_types::error::Error;
 use everscale_types::models::{
-    Account, BlockchainConfig, ComputePhase, ComputePhaseSkipReason, IntAddr, LibDescr, Message,
+    Account, BlockchainConfig, ComputePhase, IntAddr, LibDescr, Message,
     OutAction, OutActionsRevIter, OwnedMessage, OwnedRelaxedMessage, ShardAccount,
 };
 use everscale_types::prelude::{CellFamily, Dict, Store};
@@ -53,6 +52,7 @@ pub fn execute_message(
     let compute_phase_result = state.compute_phase(ComputePhaseContext {
         input: TransactionInput::Ordinary(&received_message),
         storage_fee: Tokens::ZERO,
+        force_accept: true,
     })?;
 
     let executed_compute_phase = match compute_phase_result.compute_phase {

@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use everscale_types::abi::{AbiValue, Function, NamedAbiValue};
+use everscale_types::boc::BocRepr;
 use everscale_types::cell::HashBytes;
 use everscale_types::models::{Account, BlockchainConfig, LibDescr, RelaxedMsgInfo};
 use everscale_types::num::Tokens;
@@ -58,6 +59,7 @@ impl FunctionExt for Function {
         } else {
             let (_, payload) = self
                 .encode_external(input)
+                .with_expire_at(u32::MAX)
                 .build_input_without_signature()?;
             MessageBuilder::new_external_in(account.address.clone())
                 .with_body(payload)?
@@ -66,7 +68,7 @@ impl FunctionExt for Function {
 
         let (gen_utime, gen_lt) = {
             pub const UNKNOWN_TRANSACTION_LT_OFFSET: u64 = 10;
-            let now_ms = clock.now_sec_u64();
+            let now_ms = clock.now_ms_u64();
             (
                 (now_ms / 1000) as u32,
                 account.last_trans_lt + UNKNOWN_TRANSACTION_LT_OFFSET,
@@ -117,10 +119,12 @@ impl FunctionExt for Function {
                 let slice = OwnedCellSlice::from(msg.body);
                 let mut slice = slice.apply();
 
-                let output_id = slice.load_u32()?;
+                let output_id = slice.get_u32(slice.offset_bits())?;
                 if output_id == self.output_id {
-                    output = Some(self.decode_output(slice)?);
-                    break;
+                    if let Ok(values) =  self.decode_output(slice) {
+                        output = Some(values);
+                        break;
+                    }
                 } else {
                     continue;
                 };
