@@ -1,12 +1,19 @@
-use crate::function_ext::{ExecutionOutput, FunctionExt};
+use anyhow::Result;
 use everscale_types::abi::{Function, NamedAbiValue};
 use everscale_types::cell::HashBytes;
+use everscale_types::crc::crc_16;
 use everscale_types::models::{
     Account, BlockchainConfig, ExtInMsgInfo, IntAddr, IntMsgInfo, LibDescr, MsgInfo, OwnedMessage,
 };
 use everscale_types::prelude::{Cell, CellBuilder, CellFamily, Dict};
 use nekoton_utils::time::{Clock, SimpleClock};
-use tycho_vm::OwnedCellSlice;
+use num_bigint::BigInt;
+use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
+
+use crate::function_ext::{ExecutionOutput, FunctionExt};
+use crate::local_vm;
+use crate::local_vm::VmGetterOutput;
+use crate::utils::get_gen_timings;
 
 #[derive(Clone)]
 pub struct ExecutionContext<'a> {
@@ -22,7 +29,7 @@ impl<'a> ExecutionContext<'a> {
         function: &Function,
         values: &[NamedAbiValue],
         config: BlockchainConfig,
-    ) -> anyhow::Result<ExecutionOutput> {
+    ) -> Result<ExecutionOutput> {
         function.run_local(
             &mut self.account,
             values,
@@ -39,7 +46,7 @@ impl<'a> ExecutionContext<'a> {
         function: &Function,
         values: &[NamedAbiValue],
         config: BlockchainConfig,
-    ) -> anyhow::Result<ExecutionOutput> {
+    ) -> Result<ExecutionOutput> {
         function.run_local(
             &mut self.account,
             values,
@@ -48,6 +55,38 @@ impl<'a> ExecutionContext<'a> {
             self.rand_seed,
             &self.libraries,
             config,
+        )
+    }
+
+    pub fn run_getter<M>(&self, method_id: &M, args: &[RcStackValue]) -> Result<VmGetterOutput>
+    where
+        M: AsGetterMethodId + ?Sized,
+    {
+        self.run_getter_ext(method_id, args)
+    }
+
+    fn run_getter_ext<M>(&self, method_id: &M, args: &[RcStackValue]) -> Result<VmGetterOutput>
+    where
+        M: AsGetterMethodId + ?Sized,
+    {
+        let (gen_utime, gen_lt) = get_gen_timings(self.clock, self.account.last_trans_lt);
+        let mut stack_values = Vec::with_capacity(args.len() + 1);
+        for i in args.into_iter() {
+            stack_values.push(i.clone())
+        }
+        stack_values.push(SafeRc::new_dyn_value(BigInt::from(
+            method_id.as_getter_method_id(),
+        )));
+
+        println!("{:?}", stack_values);
+
+        local_vm::call_getter(
+            gen_utime,
+            gen_lt,
+            &self.account,
+            stack_values,
+            &self.libraries,
+            BehaviourModifiers::default(),
         )
     }
 }
@@ -136,25 +175,54 @@ impl MessageBuilder {
         }
     }
 
-    pub fn build_cell(&self) -> anyhow::Result<Cell> {
+    pub fn build_cell(&self) -> Result<Cell> {
         let cell = CellBuilder::build_from(self.build())?;
         Ok(cell)
     }
 }
 
-trait IntoMessageBody {
-    fn into_message_body(self) -> anyhow::Result<OwnedCellSlice>;
+pub trait IntoMessageBody {
+    fn into_message_body(self) -> Result<OwnedCellSlice>;
 }
 
 impl IntoMessageBody for CellBuilder {
-    fn into_message_body(self) -> anyhow::Result<OwnedCellSlice> {
+    fn into_message_body(self) -> Result<OwnedCellSlice> {
         let cell = self.build()?;
         Ok(OwnedCellSlice::new_allow_exotic(cell))
     }
 }
 
 impl IntoMessageBody for Cell {
-    fn into_message_body(self) -> anyhow::Result<OwnedCellSlice> {
+    fn into_message_body(self) -> Result<OwnedCellSlice> {
         Ok(OwnedCellSlice::new_allow_exotic(self))
+    }
+}
+
+pub trait AsGetterMethodId {
+    fn as_getter_method_id(&self) -> u32;
+}
+
+impl<T: AsGetterMethodId + ?Sized> AsGetterMethodId for &T {
+    fn as_getter_method_id(&self) -> u32 {
+        T::as_getter_method_id(*self)
+    }
+}
+
+impl<T: AsGetterMethodId + ?Sized> AsGetterMethodId for &mut T {
+    fn as_getter_method_id(&self) -> u32 {
+        T::as_getter_method_id(*self)
+    }
+}
+
+impl AsGetterMethodId for u32 {
+    fn as_getter_method_id(&self) -> u32 {
+        *self
+    }
+}
+
+impl AsGetterMethodId for str {
+    fn as_getter_method_id(&self) -> u32 {
+        let crc = crc_16(self.as_bytes());
+        crc as u32 | 0x10000
     }
 }

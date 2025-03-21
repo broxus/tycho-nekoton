@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use everscale_types::abi::{AbiValue, Function, NamedAbiValue};
-use everscale_types::boc::BocRepr;
 use everscale_types::cell::HashBytes;
 use everscale_types::models::{Account, BlockchainConfig, LibDescr, RelaxedMsgInfo};
 use everscale_types::num::Tokens;
@@ -11,6 +10,7 @@ use tycho_vm::{BehaviourModifiers, OwnedCellSlice};
 
 use crate::execution_context::MessageBuilder;
 use crate::local_executor;
+use crate::utils::get_gen_timings;
 
 pub trait FunctionExt {
     fn run_local(
@@ -66,14 +66,7 @@ impl FunctionExt for Function {
                 .build()
         };
 
-        let (gen_utime, gen_lt) = {
-            pub const UNKNOWN_TRANSACTION_LT_OFFSET: u64 = 10;
-            let now_ms = clock.now_ms_u64();
-            (
-                (now_ms / 1000) as u32,
-                account.last_trans_lt + UNKNOWN_TRANSACTION_LT_OFFSET,
-            )
-        };
+        let (gen_utime, gen_lt) = get_gen_timings(clock, account.last_trans_lt);
 
         let compute_phase_result = local_executor::execute_message(
             gen_utime,
@@ -117,11 +110,11 @@ impl FunctionExt for Function {
                 }
 
                 let slice = OwnedCellSlice::from(msg.body);
-                let mut slice = slice.apply();
+                let slice = slice.apply();
 
                 let output_id = slice.get_u32(slice.offset_bits())?;
                 if output_id == self.output_id {
-                    if let Ok(values) =  self.decode_output(slice) {
+                    if let Ok(values) = self.decode_output(slice) {
                         output = Some(values);
                         break;
                     }

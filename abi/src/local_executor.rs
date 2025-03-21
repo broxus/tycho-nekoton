@@ -1,8 +1,8 @@
-use anyhow::{Result};
+use anyhow::Result;
 use everscale_types::cell::{Cell, CellBuilder, HashBytes};
 use everscale_types::models::{
-    Account, BlockchainConfig, ComputePhase, IntAddr, LibDescr, Message,
-    OutAction, OutActionsRevIter, OwnedMessage, OwnedRelaxedMessage, ShardAccount,
+    Account, BlockchainConfig, ComputePhase, IntAddr, LibDescr, OutAction, OutActionsRevIter,
+    OwnedMessage, OwnedRelaxedMessage,
 };
 use everscale_types::prelude::{CellFamily, Dict, Store};
 
