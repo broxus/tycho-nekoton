@@ -103,12 +103,10 @@ pub mod tests {
                         _ => anyhow::bail!("addresses do not match"),
                     }
                 }
-                x => println!("STACK LEN: {x}"),
+                len => anyhow::bail!("unexpected stack len: {len}"),
             }
-        } else {
-            println!("ERR: {}", result.exit_code);
         }
 
-        Ok(())
+        anyhow::bail!("unsuccessful exit code: {}", result.exit_code);
     }
 }
