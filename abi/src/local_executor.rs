@@ -16,6 +16,7 @@ pub struct ComputePhaseResult {
     pub success: bool,
     pub out_messages: Vec<OwnedRelaxedMessage>,
 }
+#[allow(clippy::too_many_arguments)]
 pub fn execute_message(
     block_unixtime: u32,
     block_lt: u64,
@@ -65,8 +66,8 @@ pub fn execute_message(
     let mut msgs = Vec::new();
     let actions_slice = OwnedCellSlice::new_allow_exotic(compute_phase_result.actions);
     let out_actions_iter = OutActionsRevIter::new(actions_slice.apply());
-    for action in out_actions_iter {
-        if let Ok(OutAction::SendMsg { out_msg, .. }) = action {
+    for action in out_actions_iter.flatten() {
+        if let OutAction::SendMsg { out_msg, .. } = action {
             msgs.push(out_msg.load()?);
         }
     }

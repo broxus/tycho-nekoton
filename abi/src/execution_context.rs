@@ -23,7 +23,7 @@ pub struct ExecutionContext<'a> {
     account: Account,
 }
 
-impl<'a> ExecutionContext<'a> {
+impl ExecutionContext<'_> {
     pub fn run_local(
         &mut self,
         function: &Function,
@@ -71,7 +71,7 @@ impl<'a> ExecutionContext<'a> {
     {
         let (gen_utime, gen_lt) = get_gen_timings(self.clock, self.account.last_trans_lt);
         let mut stack_values = Vec::with_capacity(args.len() + 1);
-        for i in args.into_iter() {
+        for i in args {
             stack_values.push(i.clone())
         }
         stack_values.push(SafeRc::new_dyn_value(BigInt::from(
@@ -99,7 +99,7 @@ pub struct ExecutionContextBuilder<'a> {
 }
 
 impl<'a> ExecutionContextBuilder<'a> {
-    pub fn new(account: &'a Account) -> ExecutionContextBuilder {
+    pub fn new(account: &'a Account) -> ExecutionContextBuilder<'a> {
         Self {
             clock: None,
             rand_seed: None,

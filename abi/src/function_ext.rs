@@ -13,6 +13,7 @@ use crate::local_executor;
 use crate::utils::get_gen_timings;
 
 pub trait FunctionExt {
+    #[allow(clippy::too_many_arguments)]
     fn run_local(
         &self,
         account: &mut Account,
