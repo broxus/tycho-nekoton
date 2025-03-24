@@ -84,7 +84,7 @@ impl FunctionExt for Function {
             return Ok(ExecutionOutput {
                 values: vec![],
                 exit_code: compute_phase_result.exit_code,
-            })
+            });
         }
 
         let mut output = vec![];

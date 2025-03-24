@@ -33,7 +33,6 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
 
     let params = parse_macro_input!(params as ModuleParams);
     let path_ident = params.path.trim_matches('"');
-    println!("current working dir {:?}", std::env::current_dir());
     let path = std::env::current_dir()
         .map_err(|e| format!("Failed to get current directory: {}", e))
         .unwrap()
@@ -165,7 +164,7 @@ impl StructGen {
 
         let mut inner_modes = Vec::new();
 
-        let func = self.generate_func_body(&function.name.as_ref(), false);
+        let func = self.generate_func_body(function.name.as_ref(), false);
 
         for i in self.temporary_internal_structs_idents.iter() {
             inner_modes.push(i.clone());
@@ -186,7 +185,7 @@ impl StructGen {
 
         let mut inner_modes = Vec::new();
 
-        let func = self.generate_func_body(&event.name.as_ref(), true);
+        let func = self.generate_func_body(event.name.as_ref(), true);
         for i in self.temporary_internal_structs_idents.iter() {
             inner_modes.push(i.clone());
         }

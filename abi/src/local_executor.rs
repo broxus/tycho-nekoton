@@ -75,7 +75,6 @@ pub fn execute_message(
 
     msgs.reverse();
 
-
     Ok(ComputePhaseResult {
         exit_code: !executed_compute_phase.exit_code,
         success: executed_compute_phase.success,

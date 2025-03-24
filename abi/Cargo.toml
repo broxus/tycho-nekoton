@@ -22,4 +22,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 base64 = { version = "0.22"}
-nekoton-proc =  {path = "../proc" }
+nekoton-proc =  {workspace = true}

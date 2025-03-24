@@ -34,7 +34,6 @@ thiserror = "2.0"
 tokio = { version = "1", default-features = false }
 
 case = "1.0.0"
-darling = "0.20"
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["visit", "parsing"] }
@@ -46,6 +45,7 @@ tycho-vm = { git = "https://github.com/broxus/tycho-vm.git" }
 nekoton-core = { path = "./core" }
 nekoton-transport = { path = "./transport" }
 nekoton-utils = { path = "./utils" }
+nekoton-proc =  { path = "./proc" }
 
 [patch.crates-io]
 everscale-types = { git = "https://github.com/broxus/everscale-types.git" }
