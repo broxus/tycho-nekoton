@@ -151,7 +151,7 @@ pub mod tests {
             .with_clock(&SimpleClock)
             .build();
 
-        match execution_context.run_local(&function, vec![].as_slice(), config) {
+        match execution_context.run_local(function, vec![].as_slice(), config) {
             Ok(output) => println!("{:?}", output),
             Err(e) => println!("error {:?}", e),
         };

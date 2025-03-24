@@ -4,7 +4,9 @@ use std::fs;
 use std::sync::Arc;
 
 use case::CaseExt;
-use everscale_types::abi::{AbiHeaderType, AbiType, Contract, Event, Function, NamedAbiType, PlainAbiType};
+use everscale_types::abi::{
+    AbiHeaderType, AbiType, Contract, Event, Function, NamedAbiType, PlainAbiType,
+};
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::parse::{Parse, ParseStream};
@@ -62,7 +64,6 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         generated_structs.extend_from_slice(inner_models.as_slice());
     });
 
-
     contract.events.iter().for_each(|(_, event)| {
         let FunctionDescriptionTokens {
             body,
@@ -77,7 +78,6 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         generated_structs.push(output);
         generated_structs.extend_from_slice(inner_models.as_slice());
     });
-
 
     let trait_gen = train_gen::TraitImplGen::new();
 
@@ -168,8 +168,10 @@ impl StructGen {
     }
 
     fn process_function(&mut self, function: &Function) -> FunctionDescriptionTokens {
-        let input_token = self.make_function_input_struct(function.name.as_ref(), function.inputs.clone(), false);
-        let output_token = self.make_function_output_struct(function.name.as_ref(), function.outputs.clone());
+        let input_token =
+            self.make_function_input_struct(function.name.as_ref(), function.inputs.clone(), false);
+        let output_token =
+            self.make_function_output_struct(function.name.as_ref(), function.outputs.clone());
 
         let mut inner_modes = Vec::new();
 
@@ -190,7 +192,8 @@ impl StructGen {
     }
 
     fn process_event(&mut self, event: &Event) -> FunctionDescriptionTokens {
-        let input_token = self.make_function_input_struct(event.name.as_ref(), event.inputs.clone(), true);
+        let input_token =
+            self.make_function_input_struct(event.name.as_ref(), event.inputs.clone(), true);
 
         let mut inner_modes = Vec::new();
 
@@ -235,8 +238,8 @@ impl StructGen {
                 let name = x.name.as_ref();
                 let quote_abi_type = quote_abi_type(&x.ty);
                 quote! {
-                NamedAbiType::new(#name, #quote_abi_type)
-            }
+                    NamedAbiType::new(#name, #quote_abi_type)
+                }
             })
             .collect();
 
@@ -268,8 +271,8 @@ impl StructGen {
                     let name = x.name.as_ref();
                     let quote_abi_type = quote_abi_type(&x.ty);
                     quote! {
-                    NamedAbiType::new(#name, #quote_abi_type)
-                }
+                        NamedAbiType::new(#name, #quote_abi_type)
+                    }
                 })
                 .collect();
 
@@ -279,19 +282,19 @@ impl StructGen {
             };
 
             quote! {
-            pub fn #function_name_ident() -> &'static everscale_types::abi::Function {
-                static ONCE: std::sync::OnceLock<everscale_types::abi::Function> = std::sync::OnceLock::new();
-                ONCE.get_or_init(|| {
-                    let inputs: [NamedAbiType; #inputs_count] = #inputs_array;
-                    let outputs: [NamedAbiType; #outputs_count] = #outputs_array;
-                    everscale_types::abi::Function::builder(ABI_VERSION, #name)
-                        .with_headers(HEADERS)
-                        .with_inputs(inputs)
-                        .with_outputs(outputs)
-                        .build()
-                })
+                pub fn #function_name_ident() -> &'static everscale_types::abi::Function {
+                    static ONCE: std::sync::OnceLock<everscale_types::abi::Function> = std::sync::OnceLock::new();
+                    ONCE.get_or_init(|| {
+                        let inputs: [NamedAbiType; #inputs_count] = #inputs_array;
+                        let outputs: [NamedAbiType; #outputs_count] = #outputs_array;
+                        everscale_types::abi::Function::builder(ABI_VERSION, #name)
+                            .with_headers(HEADERS)
+                            .with_inputs(inputs)
+                            .with_outputs(outputs)
+                            .build()
+                    })
+                }
             }
-        }
         }
     }
 
@@ -354,7 +357,12 @@ impl StructGen {
         }
     }
 
-    fn make_function_input_struct(&mut self, name: &str, inputs: Arc<[NamedAbiType]>, is_event: bool) -> proc_macro2::TokenStream {
+    fn make_function_input_struct(
+        &mut self,
+        name: &str,
+        inputs: Arc<[NamedAbiType]>,
+        is_event: bool,
+    ) -> proc_macro2::TokenStream {
         let struct_name = if is_event {
             format!("{}EventInput", name.to_camel())
         } else {
@@ -370,7 +378,11 @@ impl StructGen {
         model
     }
 
-    fn make_function_output_struct(&mut self, name: &str, outputs: Arc<[NamedAbiType]>) -> proc_macro2::TokenStream {
+    fn make_function_output_struct(
+        &mut self,
+        name: &str,
+        outputs: Arc<[NamedAbiType]>,
+    ) -> proc_macro2::TokenStream {
         let struct_name = format!("{}FunctionOutput", name.to_camel());
         let model = self.generate_model(&struct_name, outputs.clone());
 
@@ -737,5 +749,3 @@ fn make_abi_type(name: &str, abi_type: AbiType) -> proc_macro2::TokenStream {
         NamedAbiType::new(#name, #abi_type)
     }
 }
-
-
