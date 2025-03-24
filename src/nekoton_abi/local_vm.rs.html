@@ -53,54 +53,194 @@
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
-<a href="#55" id="55">55</a></pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a></pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>everscale_types::cell::HashBytes;
-<span class="kw">use </span>everscale_types::models::{Account, AccountState, LibDescr};
+<span class="kw">use </span>everscale_types::models::{Account, AccountState, BlockchainConfig, LibDescr};
 <span class="kw">use </span>everscale_types::prelude::Dict;
-<span class="kw">use </span>tycho_vm::{BehaviourModifiers, GasParams, RcStackValue, SmcInfoBase, VmStateBuilder};
+<span class="kw">use </span>tycho_vm::{
+    BehaviourModifiers, GasParams, OwnedCellSlice, RcStackValue, SmcInfoBase, UnpackedConfig,
+    VmStateBuilder,
+};
 
-<span class="kw">pub fn </span>call_getter(
-    block_unixtime: u32,
-    block_lt: u64,
-    account: <span class="kw-2">&amp;</span>Account,
-    stack: Vec&lt;RcStackValue&gt;,
-    libraries: <span class="kw-2">&amp;</span>Dict&lt;HashBytes, LibDescr&gt;,
+<span class="kw">pub struct </span>LocalVmBuilder {
+    libraries: Dict&lt;HashBytes, LibDescr&gt;,
+    behaviour_modifiers: <span class="prelude-ty">Option</span>&lt;BehaviourModifiers&gt;,
+    unpacked_config: <span class="prelude-ty">Option</span>&lt;UnpackedConfig&gt;,
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>LocalVmBuilder {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
+    }
+}
+
+<span class="kw">impl </span>LocalVmBuilder {
+    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            libraries: Dict::default(),
+            behaviour_modifiers: <span class="prelude-val">None</span>,
+            unpacked_config: <span class="prelude-val">None</span>,
+        }
+    }
+
+    <span class="kw">pub fn </span>with_libraries(<span class="kw-2">mut </span><span class="self">self</span>, libraries: Dict&lt;HashBytes, LibDescr&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.libraries = libraries;
+        <span class="self">self
+    </span>}
+    <span class="kw">pub fn </span>with_behaviour_modifiers(<span class="kw-2">mut </span><span class="self">self</span>, modifiers: BehaviourModifiers) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.behaviour_modifiers = <span class="prelude-val">Some</span>(modifiers);
+        <span class="self">self
+    </span>}
+
+    <span class="kw">pub fn </span>with_unpacked_config(<span class="kw-2">mut </span><span class="self">self</span>, config: BlockchainConfig) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="self">self</span>.unpacked_config = <span class="prelude-val">Some</span>(UnpackedConfig {
+            latest_storage_prices: config
+                .get_raw_cell(<span class="number">18</span>)<span class="question-mark">?
+                </span>.map(|x| OwnedCellSlice::new_allow_exotic(x).into()),
+            global_id: config.get_raw_cell(<span class="number">19</span>)<span class="question-mark">?</span>,
+            mc_gas_prices: config.get_raw_cell(<span class="number">20</span>)<span class="question-mark">?</span>,
+            gas_prices: config.get_raw_cell(<span class="number">21</span>)<span class="question-mark">?</span>,
+            mc_fwd_prices: config.get_raw_cell(<span class="number">24</span>)<span class="question-mark">?</span>,
+            fwd_prices: config.get_raw_cell(<span class="number">25</span>)<span class="question-mark">?</span>,
+            size_limits_config: config.get_raw_cell(<span class="number">43</span>)<span class="question-mark">?</span>,
+        });
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>)
+    }
+
+    <span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;LocalVm&gt; {
+        <span class="prelude-val">Ok</span>(LocalVm {
+            libraries: <span class="self">self</span>.libraries,
+            behaviour_modifiers: <span class="self">self</span>.behaviour_modifiers.unwrap_or_default(),
+            config: <span class="kw">match </span><span class="self">self</span>.unpacked_config {
+                <span class="prelude-val">Some</span>(config) =&gt; config,
+                <span class="prelude-val">None </span>=&gt; <span class="macro">anyhow::bail!</span>(<span class="string">"failed to build unpacked config"</span>),
+            },
+        })
+    }
+}
+
+<span class="kw">pub struct </span>LocalVm {
+    libraries: Dict&lt;HashBytes, LibDescr&gt;,
     behaviour_modifiers: BehaviourModifiers,
-) -&gt; <span class="prelude-ty">Result</span>&lt;VmGetterOutput&gt; {
-    tracing_subscriber::fmt::init();
-    <span class="kw">let </span>state = <span class="kw">match </span><span class="kw-2">&amp;</span>account.state {
-        AccountState::Active(state_init) =&gt; state_init,
-        <span class="kw">_ </span>=&gt; <span class="macro">anyhow::bail!</span>(<span class="string">"account is not active"</span>),
-    };
+    config: UnpackedConfig,
+}
 
-    <span class="kw">let </span>smc = SmcInfoBase::new()
-        .with_account_addr(account.address.clone())
-        .with_account_balance(account.balance.clone())
-        .with_block_lt(block_lt)
-        .with_tx_lt(block_lt)
-        .with_now(block_unixtime)
-        .require_ton_v4();
+<span class="kw">impl </span>LocalVm {
+    <span class="kw">pub fn </span>call_getter(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        block_unixtime: u32,
+        block_lt: u64,
+        account: <span class="kw-2">&amp;</span>Account,
+        stack: Vec&lt;RcStackValue&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;VmGetterOutput&gt; {
+        tracing_subscriber::fmt::init();
+        <span class="kw">let </span>state = <span class="kw">match </span><span class="kw-2">&amp;</span>account.state {
+            AccountState::Active(state_init) =&gt; state_init,
+            <span class="kw">_ </span>=&gt; <span class="macro">anyhow::bail!</span>(<span class="string">"account is not active"</span>),
+        };
+        <span class="kw">let </span>code = state.clone().code.ok_or(<span class="macro">anyhow!</span>(<span class="string">"account has no code"</span>))<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>code = state.clone().code.ok_or(<span class="macro">anyhow!</span>(<span class="string">"account has no code"</span>))<span class="question-mark">?</span>;
-    <span class="kw">let </span>data = state.clone().data.unwrap_or_default();
+        <span class="kw">let </span>smc = SmcInfoBase::new()
+            .with_account_addr(account.address.clone())
+            .with_account_balance(account.balance.clone())
+            .with_block_lt(block_lt)
+            .with_tx_lt(block_lt)
+            .with_now(block_unixtime)
+            .require_ton_v4()
+            .require_ton_v6()
+            .with_unpacked_config(<span class="self">self</span>.config.clone().into_tuple())
+            .require_ton_v9();
 
-    <span class="kw">let </span><span class="kw-2">mut </span>vm_state = VmStateBuilder::new()
-        .with_code(code)
-        .with_data(data)
-        .with_stack(stack)
-        .with_smc_info(smc)
-        .with_libraries(libraries)
-        .with_modifiers(behaviour_modifiers)
-        .with_gas(GasParams::getter())
-        .build();
+        <span class="kw">let </span>data = state.clone().data.unwrap_or_default();
 
-    <span class="kw">let </span>exit_code = !vm_state.run();
+        <span class="kw">let </span><span class="kw-2">mut </span>vm_state = VmStateBuilder::new()
+            .with_code(code)
+            .with_data(data)
+            .with_stack(stack)
+            .with_smc_info(smc)
+            .with_libraries(<span class="kw-2">&amp;</span><span class="self">self</span>.libraries)
+            .with_modifiers(<span class="self">self</span>.behaviour_modifiers)
+            .with_gas(GasParams::getter())
+            .build();
 
-    <span class="prelude-val">Ok</span>(VmGetterOutput {
-        exit_code,
-        stack: vm_state.stack.items.clone(),
-        success: exit_code == <span class="number">0 </span>|| exit_code == <span class="number">1</span>,
-    })
+        <span class="kw">let </span>exit_code = !vm_state.run();
+
+        <span class="prelude-val">Ok</span>(VmGetterOutput {
+            exit_code,
+            stack: vm_state.stack.items.clone(),
+            success: exit_code == <span class="number">0 </span>|| exit_code == <span class="number">1</span>,
+        })
+    }
 }
 
 <span class="kw">pub struct </span>VmGetterOutput {

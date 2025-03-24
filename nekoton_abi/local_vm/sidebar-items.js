@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["call_getter"],"struct":["VmGetterOutput"]};
+window.SIDEBAR_ITEMS = {"struct":["LocalVm","LocalVmBuilder","VmGetterOutput"]};
