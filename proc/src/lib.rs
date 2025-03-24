@@ -30,6 +30,7 @@ impl Parse for ModuleParams {
 pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
     let mut generated_structs: Vec<proc_macro2::TokenStream> = Vec::new();
     let mut generated_functions: Vec<proc_macro2::TokenStream> = Vec::new();
+    let mut generated_events: Vec<proc_macro2::TokenStream> = Vec::new();
 
     let params = parse_macro_input!(params as ModuleParams);
     let path_ident = params.path.trim_matches('"');
@@ -70,7 +71,7 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
             inner_models,
         } = struct_gen.process_event(event);
 
-        generated_functions.push(body);
+        generated_events.push(body);
 
         generated_structs.push(input);
         generated_structs.push(output);
@@ -132,6 +133,14 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
                 const ABI_VERSION: #abi_type = <#abi_type>::new(#major, #minor);
 
                 #(#generated_functions)*
+            }
+
+             pub mod events {
+                use super::*;
+
+                const ABI_VERSION: #abi_type = <#abi_type>::new(#major, #minor);
+
+                #(#generated_events)*
             }
         }
     };
