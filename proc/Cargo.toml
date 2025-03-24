@@ -1,5 +1,5 @@
 [package]
-name = "abi-gen"
+name = "nekoton-proc"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -8,8 +8,6 @@ repository.workspace = true
 license.workspace = true
 
 [lib]
-name = "abi"
-path = "src/lib.rs"
 proc-macro = true
 
 [dependencies]

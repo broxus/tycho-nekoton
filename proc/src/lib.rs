@@ -35,6 +35,7 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
 
     let params = parse_macro_input!(params as ModuleParams);
     let path_ident = params.path.trim_matches('"');
+    println!("current working dir {:?}", std::env::current_dir());
     let path = std::env::current_dir()
         .map_err(|e| format!("Failed to get current directory: {}", e))
         .unwrap()
@@ -123,9 +124,8 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
 
         pub mod #mod_name {
             use anyhow::Result;
-            use nekoton_abi::{BuildTokenValue, FunctionBuilder, EventBuilder, TokenValueExt};
             use everscale_types::abi::{NamedAbiType, AbiType, WithAbiType, IntoAbi, IntoPlainAbi,
-                FromAbiIter, FromAbi, AbiValue, NamedAbiValue
+                FromAbiIter, FromAbi, AbiValue, NamedAbiValue, Function, Event
             };
             use num_bigint::{BigInt, BigUint};
 
@@ -252,7 +252,7 @@ impl StructGen {
                 #outputs
 
                 ONCE.get_or_init(|| {
-                    everscale_types::abi::FunctionBuilder::new(ABI_VERSION, #name)
+                    everscale_types::abi::Function::builder(ABI_VERSION, #name)
                     .with_headers(HEADERS)
                     .with_inputs(inputs)
                     .with_outputs(outputs)
@@ -455,7 +455,9 @@ impl StructGen {
 
                 {
                     self.unique_tokes.insert(param.clone(), property.clone());
-                    self.generated_structs.entry(camel_case_struct_name).or_insert_with(|| a.to_vec());
+                    self.generated_structs
+                        .entry(camel_case_struct_name)
+                        .or_insert_with(|| a.to_vec());
                 }
                 property
             }
@@ -509,9 +511,7 @@ impl StructGen {
                     internal: Box::new(internal_struct),
                 }
             }
-            AbiType::Ref(a) => {
-                self.make_struct_property(name, a.as_ref())
-            }
+            AbiType::Ref(a) => self.make_struct_property(name, a.as_ref()),
         }
     }
 }

@@ -27,6 +27,7 @@ pub fn execute_message(
     libraries: &Dict<HashBytes, LibDescr>,
     vm_modifiers: tycho_vm::BehaviourModifiers,
 ) -> Result<ComputePhaseResult> {
+    tracing_subscriber::fmt::init();
     let mut builder = CellBuilder::new();
     message.store_into(&mut builder, Cell::empty_context())?;
     let in_msg_cell = builder.build()?;
@@ -74,8 +75,9 @@ pub fn execute_message(
 
     msgs.reverse();
 
+
     Ok(ComputePhaseResult {
-        exit_code: executed_compute_phase.exit_code,
+        exit_code: !executed_compute_phase.exit_code,
         success: executed_compute_phase.success,
         out_messages: msgs,
     })

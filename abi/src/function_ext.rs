@@ -80,7 +80,14 @@ impl FunctionExt for Function {
             BehaviourModifiers::default(),
         )?;
 
-        let mut output = None;
+        if !compute_phase_result.success {
+            return Ok(ExecutionOutput {
+                values: vec![],
+                exit_code: compute_phase_result.exit_code,
+            })
+        }
+
+        let mut output = vec![];
         if let Some(answer_id) = answer_id {
             for msg in compute_phase_result.out_messages {
                 if let RelaxedMsgInfo::ExtOut(_) = msg.info {
@@ -100,7 +107,7 @@ impl FunctionExt for Function {
                 if let Ok(values) =
                     NamedAbiValue::load_tuple(self.outputs.as_ref(), self.abi_version, &mut slice)
                 {
-                    output = Some(values);
+                    output = values;
                     break;
                 }
             }
@@ -116,7 +123,7 @@ impl FunctionExt for Function {
                 let output_id = slice.get_u32(slice.offset_bits())?;
                 if output_id == self.output_id {
                     if let Ok(values) = self.decode_output(slice) {
-                        output = Some(values);
+                        output = values;
                         break;
                     }
                 } else {
@@ -125,14 +132,8 @@ impl FunctionExt for Function {
             }
         };
 
-        let values = match output {
-            Some(a) => a,
-            None if !self.outputs.is_empty() => Default::default(),
-            None => anyhow::bail!("no messages produced"),
-        };
-
         Ok(ExecutionOutput {
-            values,
+            values: output,
             exit_code: compute_phase_result.exit_code,
         })
     }
