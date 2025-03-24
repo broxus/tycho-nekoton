@@ -1,2 +1,2 @@
-window.ALL_CRATES = ["nekoton_core","nekoton_transport","nekoton_utils"];
-//{"start":21,"fragment_lengths":[14,20,16]}
+window.ALL_CRATES = ["nekoton_abi","nekoton_core","nekoton_proc","nekoton_transport","nekoton_utils"];
+//{"start":21,"fragment_lengths":[13,15,15,20,16]}
