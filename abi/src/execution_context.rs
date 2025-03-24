@@ -11,8 +11,7 @@ use num_bigint::BigInt;
 use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
 
 use crate::function_ext::{ExecutionOutput, FunctionExt};
-use crate::local_vm;
-use crate::local_vm::VmGetterOutput;
+use crate::local_vm::{LocalVmBuilder, VmGetterOutput};
 use crate::utils::get_gen_timings;
 
 #[derive(Clone)]
@@ -20,6 +19,7 @@ pub struct ExecutionContext<'a> {
     clock: &'a dyn Clock,
     rand_seed: HashBytes,
     libraries: Dict<HashBytes, LibDescr>,
+    config: BlockchainConfig,
     account: Account,
 }
 
@@ -78,16 +78,13 @@ impl ExecutionContext<'_> {
             method_id.as_getter_method_id(),
         )));
 
-        println!("{:?}", stack_values);
+        let local_vm = LocalVmBuilder::new()
+            .with_behaviour_modifiers(BehaviourModifiers::default())
+            .with_libraries(self.libraries.clone())
+            .with_unpacked_config(self.config.clone())?
+            .build()?;
 
-        local_vm::call_getter(
-            gen_utime,
-            gen_lt,
-            &self.account,
-            stack_values,
-            &self.libraries,
-            BehaviourModifiers::default(),
-        )
+        local_vm.call_getter(gen_utime, gen_lt, &self.account, stack_values)
     }
 }
 
@@ -95,6 +92,7 @@ pub struct ExecutionContextBuilder<'a> {
     pub clock: Option<&'a dyn Clock>,
     pub rand_seed: Option<HashBytes>,
     pub libraries: Dict<HashBytes, LibDescr>,
+    pub config: Option<BlockchainConfig>,
     account: Account,
 }
 
@@ -104,6 +102,7 @@ impl<'a> ExecutionContextBuilder<'a> {
             clock: None,
             rand_seed: None,
             libraries: Dict::default(),
+            config: None,
             account: account.clone(),
         }
     }
@@ -121,14 +120,22 @@ impl<'a> ExecutionContextBuilder<'a> {
         self.libraries = libraries;
         self
     }
+    pub fn with_config(mut self, config: BlockchainConfig) -> Self {
+        self.config = Some(config);
+        self
+    }
 
-    pub fn build(self) -> ExecutionContext<'a> {
-        ExecutionContext {
+    pub fn build(self) -> Result<ExecutionContext<'a>> {
+        Ok(ExecutionContext {
             clock: self.clock.unwrap_or(&SimpleClock),
             rand_seed: self.rand_seed.unwrap_or_default(),
             libraries: self.libraries,
+            config: match self.config {
+                Some(c) => c,
+                None => anyhow::bail!("missing blockchain config"),
+            },
             account: self.account.clone(),
-        }
+        })
     }
 }
 
