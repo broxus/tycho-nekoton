@@ -4,9 +4,7 @@ use std::fs;
 use std::sync::Arc;
 
 use case::CaseExt;
-use everscale_types::abi::{
-    AbiHeaderType, AbiType, Contract, Function, NamedAbiType, PlainAbiType,
-};
+use everscale_types::abi::{AbiHeaderType, AbiType, Contract, Event, Function, NamedAbiType, PlainAbiType};
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::parse::{Parse, ParseStream};
@@ -49,14 +47,13 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
 
     let mut struct_gen = StructGen::new();
 
-    contract.functions.iter().for_each(|(name, function)| {
-        let name = name.to_string();
+    contract.functions.iter().for_each(|(_, function)| {
         let FunctionDescriptionTokens {
             body,
             input,
             output,
             inner_models,
-        } = struct_gen.process_function(name, function);
+        } = struct_gen.process_function(function);
 
         generated_functions.push(body);
 
@@ -64,6 +61,23 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         generated_structs.push(output);
         generated_structs.extend_from_slice(inner_models.as_slice());
     });
+
+
+    contract.events.iter().for_each(|(_, event)| {
+        let FunctionDescriptionTokens {
+            body,
+            input,
+            output,
+            inner_models,
+        } = struct_gen.process_event(event);
+
+        generated_functions.push(body);
+
+        generated_structs.push(input);
+        generated_structs.push(output);
+        generated_structs.extend_from_slice(inner_models.as_slice());
+    });
+
 
     let trait_gen = train_gen::TraitImplGen::new();
 
@@ -73,27 +87,6 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         let struct_traits = trait_gen.implement_traits(name, properties.as_slice());
         trait_implementations.push(struct_traits)
     }
-
-    // let structs: Vec<_> = contract
-    //     .events
-    //     .iter()
-    //     .map(|(name, event)| {
-    //         let name = name.to_string();
-    //         let name = format_ident!("{}EventInput", name);
-    //         let field: Vec<_> = event
-    //             .inputs
-    //             .iter()
-    //             .map(|f| {
-    //                 let property = make_struct_property(Some(f.name.to_string()), &f.ty);
-    //                 let name_ident = format_ident!("{}", f.name.to_string());
-    //                 let ty_ident = property.type_name();
-    //                 quote! {
-    //                     pub #name_ident: #ty_ident,
-    //                 }
-    //             })
-    //             .collect();
-    //     })
-    //     .collect();
 
     let header_type: syn::Type = syn::parse_str("everscale_types::abi::AbiHeaderType").unwrap();
     let abi_type: syn::Type = syn::parse_str("everscale_types::abi::AbiVersion").unwrap();
@@ -166,13 +159,13 @@ impl StructGen {
         }
     }
 
-    fn process_function(&mut self, name: String, function: &Function) -> FunctionDescriptionTokens {
-        let input_token = self.make_function_input_struct(function);
-        let output_token = self.make_function_output_struct(function);
+    fn process_function(&mut self, function: &Function) -> FunctionDescriptionTokens {
+        let input_token = self.make_function_input_struct(function.name.as_ref(), function.inputs.clone(), false);
+        let output_token = self.make_function_output_struct(function.name.as_ref(), function.outputs.clone());
 
         let mut inner_modes = Vec::new();
 
-        let func = self.generate_func_body(&name);
+        let func = self.generate_func_body(&function.name.as_ref(), false);
 
         for i in self.temporary_internal_structs_idents.iter() {
             inner_modes.push(i.clone());
@@ -188,15 +181,45 @@ impl StructGen {
         }
     }
 
-    fn generate_func_body(&self, name: &str) -> proc_macro2::TokenStream {
+    fn process_event(&mut self, event: &Event) -> FunctionDescriptionTokens {
+        let input_token = self.make_function_input_struct(event.name.as_ref(), event.inputs.clone(), true);
+
+        let mut inner_modes = Vec::new();
+
+        let func = self.generate_func_body(&event.name.as_ref(), true);
+        for i in self.temporary_internal_structs_idents.iter() {
+            inner_modes.push(i.clone());
+        }
+
+        self.temporary_internal_structs_idents.clear();
+
+        FunctionDescriptionTokens {
+            body: func,
+            input: input_token,
+            output: proc_macro2::TokenStream::default(), //event has no output
+            inner_models: inner_modes,
+        }
+    }
+
+    fn generate_func_body(&self, name: &str, is_event: bool) -> proc_macro2::TokenStream {
         let snake_function_name = name.to_snake();
         let camel_function_name = name.to_camel();
 
-        let function_name_ident = format_ident!("{}", snake_function_name);
+        let function_name_ident = if is_event {
+            format_ident!("{}_event", snake_function_name)
+        } else {
+            format_ident!("{}", snake_function_name)
+        };
+
+        let input_name = if is_event {
+            format!("{}EventInput", &camel_function_name)
+        } else {
+            format!("{}FunctionInput", &camel_function_name)
+        };
 
         let inputs: Vec<_> = self
             .generated_structs
-            .get(&format!("{}FunctionInput", &camel_function_name))
+            .get(&input_name)
             .cloned()
             .unwrap_or_default()
             .into_iter()
@@ -204,63 +227,64 @@ impl StructGen {
                 let name = x.name.as_ref();
                 let quote_abi_type = quote_abi_type(&x.ty);
                 quote! {
-                    NamedAbiType::new(#name, #quote_abi_type)
-                }
+                NamedAbiType::new(#name, #quote_abi_type)
+            }
             })
             .collect();
 
-        let outputs: Vec<_> = self
-            .generated_structs
-            .get(&format!("{}FunctionOutput", &camel_function_name))
-            .cloned()
-            .unwrap_or_default()
-            .into_iter()
-            .map(|x| {
-                let name = x.name.as_ref();
-                let quote_abi_type = quote_abi_type(&x.ty);
-                quote! {
-                    NamedAbiType::new(#name, #quote_abi_type)
-                }
-            })
-            .collect();
-
-        let input_tokens = quote! {
+        let inputs_count = inputs.len();
+        let inputs_array = quote! {
             [ #(#inputs),* ]
         };
 
-        let output_tokens = quote! {
-            [ #(#outputs),* ]
-        };
+        if is_event {
+            quote! {
+                pub fn #function_name_ident() -> &'static everscale_types::abi::Event {
+                    static ONCE: std::sync::OnceLock<everscale_types::abi::Event> = std::sync::OnceLock::new();
+                    ONCE.get_or_init(|| {
+                        let inputs: [NamedAbiType; #inputs_count] = #inputs_array;
+                        everscale_types::abi::Event::builder(ABI_VERSION, #name)
+                            .with_inputs(inputs)
+                            .build()
+                    })
+                }
+            }
+        } else {
+            let outputs: Vec<_> = self
+                .generated_structs
+                .get(&format!("{}FunctionOutput", &camel_function_name))
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|x| {
+                    let name = x.name.as_ref();
+                    let quote_abi_type = quote_abi_type(&x.ty);
+                    quote! {
+                    NamedAbiType::new(#name, #quote_abi_type)
+                }
+                })
+                .collect();
 
-        let inputs_count = inputs.len();
-        let outputs_count = outputs.len();
+            let outputs_count = outputs.len();
+            let outputs_array = quote! {
+                [ #(#outputs),* ]
+            };
 
-        let inputs = quote! {
-            let inputs: [NamedAbiType; #inputs_count] = #input_tokens;
-
-        };
-
-        let outputs = quote! {
-            let outputs: [NamedAbiType; #outputs_count] = #output_tokens;
-        };
-
-        let func = quote! {
+            quote! {
             pub fn #function_name_ident() -> &'static everscale_types::abi::Function {
                 static ONCE: std::sync::OnceLock<everscale_types::abi::Function> = std::sync::OnceLock::new();
-
-                #inputs
-                #outputs
-
                 ONCE.get_or_init(|| {
+                    let inputs: [NamedAbiType; #inputs_count] = #inputs_array;
+                    let outputs: [NamedAbiType; #outputs_count] = #outputs_array;
                     everscale_types::abi::Function::builder(ABI_VERSION, #name)
-                    .with_headers(HEADERS)
-                    .with_inputs(inputs)
-                    .with_outputs(outputs)
-                    .build()
+                        .with_headers(HEADERS)
+                        .with_inputs(inputs)
+                        .with_outputs(outputs)
+                        .build()
                 })
             }
-        };
-        func
+        }
+        }
     }
 
     fn generate_model(
@@ -322,25 +346,29 @@ impl StructGen {
         }
     }
 
-    fn make_function_input_struct(&mut self, function: &Function) -> proc_macro2::TokenStream {
-        let struct_name = format!("{}FunctionInput", function.name.as_ref().to_camel());
-        let model = self.generate_model(&struct_name, function.inputs.clone());
+    fn make_function_input_struct(&mut self, name: &str, inputs: Arc<[NamedAbiType]>, is_event: bool) -> proc_macro2::TokenStream {
+        let struct_name = if is_event {
+            format!("{}EventInput", name.to_camel())
+        } else {
+            format!("{}EventOutput", name.to_camel())
+        };
+        let model = self.generate_model(&struct_name, inputs.clone());
 
         if !self.generated_structs.contains_key(&struct_name) {
             self.generated_structs
-                .insert(struct_name.clone(), function.inputs.to_vec());
+                .insert(struct_name.clone(), inputs.to_vec());
         }
 
         model
     }
 
-    fn make_function_output_struct(&mut self, function: &Function) -> proc_macro2::TokenStream {
-        let struct_name = format!("{}FunctionOutput", function.name.as_ref().to_camel());
-        let model = self.generate_model(&struct_name, function.outputs.clone());
+    fn make_function_output_struct(&mut self, name: &str, outputs: Arc<[NamedAbiType]>) -> proc_macro2::TokenStream {
+        let struct_name = format!("{}FunctionOutput", name.to_camel());
+        let model = self.generate_model(&struct_name, outputs.clone());
 
         if !self.generated_structs.contains_key(&struct_name) {
             self.generated_structs
-                .insert(struct_name.clone(), function.outputs.to_vec());
+                .insert(struct_name.clone(), outputs.to_vec());
         }
 
         model
@@ -701,3 +729,5 @@ fn make_abi_type(name: &str, abi_type: AbiType) -> proc_macro2::TokenStream {
         NamedAbiType::new(#name, #abi_type)
     }
 }
+
+

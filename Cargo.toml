@@ -50,7 +50,3 @@ nekoton-utils = { path = "./utils" }
 [patch.crates-io]
 everscale-types = { git = "https://github.com/broxus/everscale-types.git" }
 
-[patch.'https://github.com/broxus/tycho-vm.git']
-tycho-vm = {path = "/home/mrwad3r/Desktop/dexpa-projects/everscale-vm/vm"}
-tycho-executor = {path = "/home/mrwad3r/Desktop/dexpa-projects/everscale-vm/executor"}
-
