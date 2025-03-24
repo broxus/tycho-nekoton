@@ -1,0 +1,25 @@
+[package]
+name = "nekoton-abi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = {workspace = true}
+everscale-types = {workspace = true}
+nekoton-utils = { workspace = true}
+num-bigint = {workspace = true}
+num-traits = {workspace = true}
+tycho-executor = {workspace = true}
+tycho-vm = {workspace = true, features = ["tracing"]}
+
+
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+
+[dev-dependencies]
+base64 = { version = "0.22"}
+nekoton-proc =  {workspace = true}

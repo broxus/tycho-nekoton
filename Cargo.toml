@@ -3,12 +3,14 @@ version = "0.0.1"
 edition = "2021"
 authors = ["Broxus Team"]
 rust-version = "1.80.0"
-repository = "https://github.com/broxus/nekoton"
+repository = "https://github.com/broxus/tycho-nekoton"
 license = "MIT"
 
 [workspace]
 resolver = "2"
 members = [
+    "abi",
+    "proc",
     "core",
     "transport",
     "utils",
@@ -19,17 +21,32 @@ members = [
 anyhow = "1.0"
 async-trait = "0.1"
 everscale-crypto = { version = "0.2", features = ["tl-proto", "serde"] }
-everscale-types = { version = "0.1.0-rc.6", features = ["tycho"] }
+everscale-types = { version = "0.1.2", features = ["tycho", "abi"] }
 futures-util = "0.3"
+num-bigint = "0.4.6"
+num-traits = "0.2"
 parking_lot = { version = "0.12.1" }
 rand = "0.8"
 reqwest = { version = "0.12", default-features = false }
 serde = "1.0"
 serde_json = "1.0"
-thiserror = "1.0"
+thiserror = "2.0"
 tokio = { version = "1", default-features = false }
+
+case = "1.0.0"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "2.0", features = ["visit", "parsing"] }
+
+tycho-executor = { git = "https://github.com/broxus/tycho-vm.git" }
+tycho-vm = { git = "https://github.com/broxus/tycho-vm.git" }
 
 # local deps
 nekoton-core = { path = "./core" }
 nekoton-transport = { path = "./transport" }
 nekoton-utils = { path = "./utils" }
+nekoton-proc =  { path = "./proc" }
+
+[patch.crates-io]
+everscale-types = { git = "https://github.com/broxus/everscale-types.git" }
+

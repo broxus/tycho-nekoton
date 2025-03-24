@@ -1,0 +1,20 @@
+[package]
+name = "nekoton-proc"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+case = {workspace = true}
+proc-macro2 = {workspace = true}
+quote = {workspace = true}
+syn = { workspace = true }
+serde_json = {workspace = true}
+everscale-types = {workspace = true}
+
