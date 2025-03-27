@@ -80,8 +80,7 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a></pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Result;
+<a href="#82" id="82">82</a></pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>everscale_types::cell::{Cell, CellBuilder, HashBytes};
 <span class="kw">use </span>everscale_types::models::{
     Account, BlockchainConfig, ComputePhase, IntAddr, LibDescr, OutAction, OutActionsRevIter,
@@ -107,16 +106,15 @@
     message: OwnedMessage,
     config: BlockchainConfig,
     rand_seed: HashBytes,
-    libraries: <span class="kw-2">&amp;</span>Dict&lt;HashBytes, LibDescr&gt;,
+    libraries: Dict&lt;HashBytes, LibDescr&gt;,
     vm_modifiers: tycho_vm::BehaviourModifiers,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;ComputePhaseResult&gt; {
-    tracing_subscriber::fmt::init();
     <span class="kw">let </span><span class="kw-2">mut </span>builder = CellBuilder::new();
     message.store_into(<span class="kw-2">&amp;mut </span>builder, Cell::empty_context())<span class="question-mark">?</span>;
     <span class="kw">let </span>in_msg_cell = builder.build()<span class="question-mark">?</span>;
 
     <span class="kw">let </span>executor_params = ExecutorParams {
-        libraries: libraries.clone(),
+        libraries,
         rand_seed,
         block_unixtime,
         block_lt,

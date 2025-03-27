@@ -231,9 +231,7 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a></pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Result;
+<a href="#233" id="233">233</a></pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>everscale_types::abi::{Function, NamedAbiValue};
 <span class="kw">use </span>everscale_types::cell::HashBytes;
 <span class="kw">use </span>everscale_types::crc::crc_16;
@@ -263,7 +261,6 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         function: <span class="kw-2">&amp;</span>Function,
         values: <span class="kw-2">&amp;</span>[NamedAbiValue],
-        config: BlockchainConfig,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ExecutionOutput&gt; {
         function.run_local(
             <span class="kw-2">&amp;mut </span><span class="self">self</span>.account,
@@ -271,8 +268,8 @@
             <span class="self">self</span>.clock,
             <span class="bool-val">false</span>,
             <span class="self">self</span>.rand_seed,
-            <span class="kw-2">&amp;</span><span class="self">self</span>.libraries,
-            config,
+            <span class="self">self</span>.libraries.clone(),
+            <span class="self">self</span>.config.clone(),
         )
     }
 
@@ -280,7 +277,6 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         function: <span class="kw-2">&amp;</span>Function,
         values: <span class="kw-2">&amp;</span>[NamedAbiValue],
-        config: BlockchainConfig,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ExecutionOutput&gt; {
         function.run_local(
             <span class="kw-2">&amp;mut </span><span class="self">self</span>.account,
@@ -288,8 +284,8 @@
             <span class="self">self</span>.clock,
             <span class="bool-val">true</span>,
             <span class="self">self</span>.rand_seed,
-            <span class="kw-2">&amp;</span><span class="self">self</span>.libraries,
-            config,
+            <span class="self">self</span>.libraries.clone(),
+            <span class="self">self</span>.config.clone(),
         )
     }
 

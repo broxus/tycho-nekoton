@@ -167,7 +167,7 @@
         clock: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Clock,
         responsible: bool,
         rand_seed: HashBytes,
-        libraries: <span class="kw-2">&amp;</span>Dict&lt;HashBytes, LibDescr&gt;,
+        libraries: Dict&lt;HashBytes, LibDescr&gt;,
         config: BlockchainConfig,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ExecutionOutput&gt;;
 }
@@ -180,7 +180,7 @@
         clock: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Clock,
         responsible: bool,
         rand_seed: HashBytes,
-        libraries: <span class="kw-2">&amp;</span>Dict&lt;HashBytes, LibDescr&gt;,
+        libraries: Dict&lt;HashBytes, LibDescr&gt;,
         config: BlockchainConfig,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ExecutionOutput&gt; {
         <span class="kw">let </span>answer_id = <span class="kw">if </span>responsible {

@@ -183,7 +183,9 @@
 <a href="#182" id="182">182</a>
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a></pre></div><pre class="rust"><code><span class="kw">pub mod </span>execution_context;
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a></pre></div><pre class="rust"><code><span class="kw">pub mod </span>execution_context;
 <span class="kw">pub mod </span>function_ext;
 <span class="kw">pub mod </span>local_executor;
 <span class="kw">pub mod </span>local_vm;
@@ -239,13 +241,14 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>execution_context = ExecutionContextBuilder::new(<span class="kw-2">&amp;</span>account)
             .with_clock(<span class="kw-2">&amp;</span>SimpleClock)
+            .with_config(config)
             .build()
             .unwrap();
         <span class="kw">let </span>values = <span class="macro">vec!</span>[
             AbiValue::Uint(<span class="number">64</span>, BigUint::zero()).named(<span class="string">"_index"</span>),
             AbiValue::Uint(<span class="number">256</span>, BigUint::zero()).named(<span class="string">"_publicKey"</span>),
         ];
-        <span class="kw">match </span>execution_context.run_local(<span class="kw-2">&amp;</span>function, values.as_slice(), config) {
+        <span class="kw">match </span>execution_context.run_local(<span class="kw-2">&amp;</span>function, values.as_slice()) {
             <span class="prelude-val">Ok</span>(output) =&gt; <span class="macro">println!</span>(<span class="string">"{:?}"</span>, output),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">println!</span>(<span class="string">"error {:?}"</span>, e),
         };
@@ -356,10 +359,11 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>execution_context = ExecutionContextBuilder::new(<span class="kw-2">&amp;</span>account)
             .with_clock(<span class="kw-2">&amp;</span>SimpleClock)
+            .with_config(config)
             .build()
             .unwrap();
 
-        <span class="kw">match </span>execution_context.run_local(function, <span class="macro">vec!</span>[].as_slice(), config) {
+        <span class="kw">match </span>execution_context.run_local(function, <span class="macro">vec!</span>[].as_slice()) {
             <span class="prelude-val">Ok</span>(output) =&gt; <span class="macro">println!</span>(<span class="string">"{:?}"</span>, output),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">println!</span>(<span class="string">"error {:?}"</span>, e),
         };
