@@ -21,7 +21,7 @@ pub trait FunctionExt {
         clock: &dyn Clock,
         responsible: bool,
         rand_seed: HashBytes,
-        libraries: &Dict<HashBytes, LibDescr>,
+        libraries: Dict<HashBytes, LibDescr>,
         config: BlockchainConfig,
     ) -> Result<ExecutionOutput>;
 }
@@ -34,7 +34,7 @@ impl FunctionExt for Function {
         clock: &dyn Clock,
         responsible: bool,
         rand_seed: HashBytes,
-        libraries: &Dict<HashBytes, LibDescr>,
+        libraries: Dict<HashBytes, LibDescr>,
         config: BlockchainConfig,
     ) -> Result<ExecutionOutput> {
         let answer_id = if responsible {

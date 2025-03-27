@@ -78,7 +78,6 @@ impl LocalVm {
         account: &Account,
         stack: Vec<RcStackValue>,
     ) -> Result<VmGetterOutput> {
-        tracing_subscriber::fmt::init();
         let state = match &account.state {
             AccountState::Active(state_init) => state_init,
             _ => anyhow::bail!("account is not active"),

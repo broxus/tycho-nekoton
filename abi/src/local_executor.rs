@@ -24,16 +24,15 @@ pub fn execute_message(
     message: OwnedMessage,
     config: BlockchainConfig,
     rand_seed: HashBytes,
-    libraries: &Dict<HashBytes, LibDescr>,
+    libraries: Dict<HashBytes, LibDescr>,
     vm_modifiers: tycho_vm::BehaviourModifiers,
 ) -> Result<ComputePhaseResult> {
-    tracing_subscriber::fmt::init();
     let mut builder = CellBuilder::new();
     message.store_into(&mut builder, Cell::empty_context())?;
     let in_msg_cell = builder.build()?;
 
     let executor_params = ExecutorParams {
-        libraries: libraries.clone(),
+        libraries,
         rand_seed,
         block_unixtime,
         block_lt,

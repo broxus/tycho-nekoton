@@ -28,7 +28,6 @@ impl ExecutionContext<'_> {
         &mut self,
         function: &Function,
         values: &[NamedAbiValue],
-        config: BlockchainConfig,
     ) -> Result<ExecutionOutput> {
         function.run_local(
             &mut self.account,
@@ -36,8 +35,8 @@ impl ExecutionContext<'_> {
             self.clock,
             false,
             self.rand_seed,
-            &self.libraries,
-            config,
+            self.libraries.clone(),
+            self.config.clone(),
         )
     }
 
@@ -45,7 +44,6 @@ impl ExecutionContext<'_> {
         &mut self,
         function: &Function,
         values: &[NamedAbiValue],
-        config: BlockchainConfig,
     ) -> Result<ExecutionOutput> {
         function.run_local(
             &mut self.account,
@@ -53,8 +51,8 @@ impl ExecutionContext<'_> {
             self.clock,
             true,
             self.rand_seed,
-            &self.libraries,
-            config,
+            self.libraries.clone(),
+            self.config.clone(),
         )
     }
 

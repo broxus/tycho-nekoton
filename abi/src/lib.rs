@@ -54,13 +54,14 @@ pub mod tests {
 
         let mut execution_context = ExecutionContextBuilder::new(&account)
             .with_clock(&SimpleClock)
+            .with_config(config)
             .build()
             .unwrap();
         let values = vec![
             AbiValue::Uint(64, BigUint::zero()).named("_index"),
             AbiValue::Uint(256, BigUint::zero()).named("_publicKey"),
         ];
-        match execution_context.run_local(&function, values.as_slice(), config) {
+        match execution_context.run_local(&function, values.as_slice()) {
             Ok(output) => println!("{:?}", output),
             Err(e) => println!("error {:?}", e),
         };
@@ -171,10 +172,11 @@ pub mod tests {
 
         let mut execution_context = ExecutionContextBuilder::new(&account)
             .with_clock(&SimpleClock)
+            .with_config(config)
             .build()
             .unwrap();
 
-        match execution_context.run_local(function, vec![].as_slice(), config) {
+        match execution_context.run_local(function, vec![].as_slice()) {
             Ok(output) => println!("{:?}", output),
             Err(e) => println!("error {:?}", e),
         };
