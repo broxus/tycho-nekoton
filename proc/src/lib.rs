@@ -88,15 +88,15 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         trait_implementations.push(struct_traits)
     }
 
-    let header_type: syn::Type = syn::parse_str("everscale_types::abi::AbiHeaderType").unwrap();
-    let abi_type: syn::Type = syn::parse_str("everscale_types::abi::AbiVersion").unwrap();
+    let header_type: syn::Type = syn::parse_str("everscale_types::contracts::AbiHeaderType").unwrap();
+    let abi_type: syn::Type = syn::parse_str("everscale_types::contracts::AbiVersion").unwrap();
 
     let mut header_idents = Vec::<proc_macro2::TokenStream>::new();
     for i in contract.headers.iter() {
         let ty = match i {
-            AbiHeaderType::Expire => "everscale_types::abi::AbiHeaderType::Expire",
-            AbiHeaderType::PublicKey => "everscale_types::abi::AbiHeaderType::PublicKey",
-            AbiHeaderType::Time => "everscale_types::abi::AbiHeaderType::Time",
+            AbiHeaderType::Expire => "everscale_types::contracts::AbiHeaderType::Expire",
+            AbiHeaderType::PublicKey => "everscale_types::contracts::AbiHeaderType::PublicKey",
+            AbiHeaderType::Time => "everscale_types::contracts::AbiHeaderType::Time",
         };
         let ty: syn::Type = syn::parse_str(ty).expect("Failed to parse header type");
         let quote = quote! {

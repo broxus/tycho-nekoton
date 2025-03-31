@@ -3,18 +3,18 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use everscale_types::cell::DynCell;
-use everscale_types::models::StdAddr;
+use everscale_types::cell::{DynCell, HashBytes};
+use everscale_types::models::{StdAddr, Transaction};
 use futures_util::StreamExt;
 use nekoton_core::transport::{ContractState, LatestBlockchainConfig, Transport};
 use parking_lot::RwLock;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
-use crate::endpoint::{Connection, Endpoint};
-use crate::models::Timings;
+use crate::rpc::{Connection, RpcConnection};
 
-mod endpoint;
+mod rpc;
+mod ws;
 mod models;
 mod utils;
 
@@ -26,8 +26,8 @@ pub struct RpcClient {
 }
 
 struct Inner {
-    endpoints: Vec<Endpoint>,
-    live_endpoints: RwLock<Vec<Endpoint>>,
+    endpoints: Vec<RpcConnection>,
+    live_endpoints: RwLock<Vec<RpcConnection>>,
     options: ClientOptions,
 }
 
@@ -48,7 +48,7 @@ impl RpcClient {
 
         let endpoints = endpoints
             .into_iter()
-            .map(|endpoint| Endpoint::new(endpoint, client.clone()))
+            .map(|endpoint| RpcConnection::new(endpoint, client.clone()))
             .collect();
 
         let transport = Self {
@@ -82,7 +82,7 @@ impl RpcClient {
         Ok(transport)
     }
 
-    async fn get_client(&self) -> Option<Endpoint> {
+    async fn get_client(&self) -> Option<RpcConnection> {
         for _ in 0..self.inner.endpoints.len() {
             let client = {
                 let live_endpoints = self.inner.live_endpoints.read();
@@ -101,7 +101,7 @@ impl RpcClient {
 
     async fn with_retries<F, Fut, T>(&self, f: F) -> anyhow::Result<T>
     where
-        F: Fn(Endpoint) -> Fut,
+        F: Fn(RpcConnection) -> Fut,
         Fut: Future<Output = anyhow::Result<T>>,
     {
         const NUM_RETRIES: usize = 10;
@@ -160,18 +160,22 @@ impl Transport for RpcClient {
     // TODO: avoid of additional Future created by async move { ... }
 
     async fn broadcast_message(&self, message: &DynCell) -> anyhow::Result<()> {
-        self.with_retries(|client| async move { client.broadcast_message(message).await })
+        self.with_retries(|instance| async move { instance.broadcast_message(message).await })
             .await
     }
 
     async fn get_contract_state(&self, address: &StdAddr) -> anyhow::Result<ContractState> {
-        self.with_retries(|client| async move { client.get_contract_state(address).await })
+        self.with_retries(|instance| async move { instance.get_contract_state(address).await })
             .await
     }
 
     async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
-        self.with_retries(|client| async move { client.get_config().await })
+        self.with_retries(|instance| async move { instance.get_config().await })
             .await
+    }
+
+    async fn get_transaction(&self, hash: &HashBytes) -> anyhow::Result<Option<Transaction>> {
+        todo!()
     }
 }
 
@@ -213,12 +217,12 @@ impl Default for ClientOptions {
 pub enum ChooseStrategy {
     Random,
     RoundRobin,
-    /// Choose the endpoint with the lowest latency
+    /// Choose the rpc with the lowest latency
     TimeBased,
 }
 
 impl ChooseStrategy {
-    fn choose(&self, endpoints: &[Endpoint]) -> Option<Endpoint> {
+    fn choose(&self, endpoints: &[RpcConnection]) -> Option<RpcConnection> {
         use rand::prelude::SliceRandom;
 
         match self {
@@ -235,24 +239,9 @@ impl ChooseStrategy {
     }
 }
 
-pub enum LiveCheckResult {
-    /// GetTimings request was successful
-    Live(Timings),
-    Dead,
-}
-
-impl LiveCheckResult {
-    fn as_bool(&self) -> bool {
-        match self {
-            LiveCheckResult::Live(metrics) => metrics.is_reliable(),
-            LiveCheckResult::Dead => false,
-        }
-    }
-}
-
 #[derive(thiserror::Error, Debug)]
 pub enum TransportError {
-    #[error("No endpoint available")]
+    #[error("No rpc available")]
     NoEndpointsAvailable,
 }
 

@@ -9,7 +9,6 @@ license = "MIT"
 [workspace]
 resolver = "2"
 members = [
-    "abi",
     "proc",
     "core",
     "transport",

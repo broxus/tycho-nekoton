@@ -1,24 +1,18 @@
 use std::marker::PhantomData;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use everscale_types::models::*;
 use everscale_types::prelude::*;
-use nekoton_core::transport::{ContractState, LatestBlockchainConfig, Transport};
-use parking_lot::Mutex;
+use nekoton_core::transport::{ContractState, LatestBlockchainConfig};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
-use crate::endpoint::Connection;
 use crate::models::Timings;
-use crate::LiveCheckResult;
 
 #[derive(Clone)]
 pub struct JrpcClient {
     client: reqwest::Client,
     endpoint: Arc<String>,
-    was_dead: Arc<AtomicBool>,
-    stats: Arc<Mutex<Option<Timings>>>,
 }
 
 impl JrpcClient {
@@ -42,49 +36,21 @@ impl JrpcClient {
     }
 }
 
-#[async_trait::async_trait]
-impl Connection for JrpcClient {
-    fn new(endpoint: Url, client: reqwest::Client) -> Self {
+impl JrpcClient {
+    pub(crate) fn new(endpoint: Url, client: reqwest::Client) -> Self {
         JrpcClient {
             client,
             endpoint: Arc::new(endpoint.to_string()),
-            was_dead: Arc::new(AtomicBool::new(false)),
-            stats: Arc::new(Default::default()),
         }
     }
 
-    fn endpoint(&self) -> &str {
+    pub(crate) fn endpoint(&self) -> &str {
         self.endpoint.as_str()
-    }
-
-    fn get_stats(&self) -> Option<Timings> {
-        self.stats.lock().clone()
-    }
-
-    fn set_stats(&self, stats: Option<Timings>) {
-        *self.stats.lock() = stats;
-    }
-
-    fn update_was_dead(&self, is_dead: bool) {
-        self.was_dead.store(is_dead, Ordering::Release);
-    }
-
-    async fn is_alive_inner(&self) -> LiveCheckResult {
-        let request = JrpcRequest {
-            method: "getTimings",
-            params: &(),
-        };
-
-        match self.post::<_, Timings>(&request).await {
-            Ok(timings) => LiveCheckResult::Live(timings),
-            Err(_) => LiveCheckResult::Dead,
-        }
     }
 }
 
-#[async_trait::async_trait]
-impl Transport for JrpcClient {
-    async fn broadcast_message(&self, message: &DynCell) -> anyhow::Result<()> {
+impl JrpcClient {
+    pub async fn broadcast_message(&self, message: &DynCell) -> anyhow::Result<()> {
         #[derive(Serialize)]
         struct Params<'a> {
             #[serde(with = "Boc")]
@@ -98,7 +64,16 @@ impl Transport for JrpcClient {
         .await
     }
 
-    async fn get_contract_state(&self, address: &StdAddr) -> anyhow::Result<ContractState> {
+    pub async fn get_timings(&self) -> anyhow::Result<Timings> {
+        let request = JrpcRequest {
+            method: "getTimings",
+            params: &(),
+        };
+
+        self.post::<_, Timings>(&request).await
+    }
+
+    pub async fn get_contract_state(&self, address: &StdAddr) -> anyhow::Result<ContractState> {
         #[derive(Serialize)]
         struct Params<'a> {
             address: &'a StdAddr,
@@ -111,7 +86,7 @@ impl Transport for JrpcClient {
         .await
     }
 
-    async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
+    pub async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
         self.post(&JrpcRequest {
             method: "getBlockchainConfig",
             params: &(),

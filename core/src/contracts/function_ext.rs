@@ -7,10 +7,10 @@ use everscale_types::prelude::Dict;
 use nekoton_utils::time::Clock;
 use num_traits::cast::ToPrimitive;
 use tycho_vm::{BehaviourModifiers, OwnedCellSlice};
-
-use crate::execution_context::MessageBuilder;
-use crate::local_executor;
-use crate::utils::get_gen_timings;
+use crate::models::GenTimings;
+use super::execution_context::MessageBuilder;
+use super::local_executor;
+use super::utils::get_gen_timings;
 
 pub trait FunctionExt {
     #[allow(clippy::too_many_arguments)]
@@ -44,10 +44,10 @@ impl FunctionExt for Function {
                 Some(AbiValue::Uint(32, number)) => {
                     let answer_id = number
                         .to_u32()
-                        .ok_or_else(|| anyhow!("Invalid abi value"))?;
+                        .ok_or_else(|| anyhow!("Invalid contracts value"))?;
                     Some(answer_id)
                 }
-                _ => anyhow::bail!("Invalid abi"),
+                _ => anyhow::bail!("Invalid contracts"),
             }
         } else {
             None
@@ -67,7 +67,7 @@ impl FunctionExt for Function {
                 .build()
         };
 
-        let (gen_utime, gen_lt) = get_gen_timings(clock, account.last_trans_lt);
+        let GenTimings {gen_utime, gen_lt} = get_gen_timings(clock, account.last_trans_lt);
 
         let compute_phase_result = local_executor::execute_message(
             gen_utime,
