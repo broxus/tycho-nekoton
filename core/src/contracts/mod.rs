@@ -17,8 +17,7 @@ pub mod tests {
     use num_bigint::BigUint;
     use num_traits::Zero;
     use tycho_vm::{tuple, OwnedCellSlice, SafeRc};
-
-    use crate::execution_context::ExecutionContextBuilder;
+    use crate::contracts::execution_context::ExecutionContextBuilder;
 
     #[test]
     fn local_executor_test() {
@@ -117,8 +116,8 @@ pub mod tests {
         if result.success {
             match result.stack.len() {
                 1 => {
-                    let first = result.stack[0].clone().into_cell_slice()?;
-                    let slice = SafeRc::unwrap_or_clone(first);
+                    let first = result.stack[0].clone().into_int()?;
+                    let slice= SafeRc::unwrap_or_clone(first);
                     let addr = IntAddr::load_from(&mut slice.apply())?;
                     match addr {
                         IntAddr::Std(std) => {
@@ -182,6 +181,6 @@ pub mod tests {
         };
     }
 
-    #[nekoton_proc::abi("abi/test/abi.json")]
+    #[nekoton_proc::abi("contracts/test/contracts.json")]
     pub mod qube {}
 }

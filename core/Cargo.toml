@@ -13,7 +13,16 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 everscale-crypto = { workspace = true }
 everscale-types = { workspace = true }
+futures-util = { workspace = true }
+num-bigint = {workspace = true}
+num-traits = {workspace = true}
 serde = { workspace = true }
+tycho-executor = {workspace = true}
+tycho-vm = {workspace = true, features = ["tracing"]}
 
 # local deps
 nekoton-utils = { workspace = true }
+
+[dev-dependencies]
+base64 = { version = "0.22"}
+nekoton-proc =  {workspace = true}
