@@ -72,7 +72,7 @@ impl RpcConnection {
         hash_bytes: &HashBytes,
     ) -> anyhow::Result<Option<Transaction>> {
         match &self.rpc_type {
-            RpcType::Jrpc(_) => todo!(),
+            RpcType::Jrpc(jrpc_client) => jrpc_client.get_transaction(hash_bytes).await,
             RpcType::Proto => todo!(),
         }
     }

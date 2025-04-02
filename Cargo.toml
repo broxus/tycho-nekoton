@@ -21,6 +21,7 @@ anyhow = "1.0"
 async-trait = "0.1"
 everscale-types = { git = "https://github.com/broxus/everscale-types.git", features = ["tycho", "abi"] }
 futures-util = "0.3"
+hex = { version = "0.4" }
 num-bigint = "0.4.6"
 num-traits = "0.2"
 parking_lot = { version = "0.12.1" }

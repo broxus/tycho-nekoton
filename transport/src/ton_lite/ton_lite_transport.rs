@@ -49,14 +49,6 @@ impl Inner {
             }
         }
     }
-
-    async fn get_last_mc_block_id(&self) -> Result<BlockId> {
-        let guard = self.last_mc_block.lock().await;
-        match guard.as_ref() {
-            Some(block) => Ok(block.clone()),
-            None => self.client.get_last_mc_block_id().await,
-        }
-    }
 }
 
 impl TonLiteTransport {
@@ -79,6 +71,14 @@ impl TonLiteTransport {
             inner: Arc::new(inner),
         }
     }
+
+    async fn get_last_mc_block_id(&self) -> Result<BlockId> {
+        let guard = self.inner.last_mc_block.lock().await;
+        match guard.as_ref() {
+            Some(block) => Ok(block.clone()),
+            None => self.inner.client.get_last_mc_block_id().await,
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -94,7 +94,7 @@ impl Transport for TonLiteTransport {
         address: &StdAddr,
         last_transaction_lt: Option<u64>,
     ) -> Result<ContractState> {
-        let latest_block = self.inner.get_last_mc_block_id().await?;
+        let latest_block = self.get_last_mc_block_id().await?;
         let account_state = self
             .inner
             .client
@@ -135,7 +135,7 @@ impl Transport for TonLiteTransport {
     }
 
     async fn get_config(&self) -> Result<LatestBlockchainConfig> {
-        let latest_block = self.inner.get_last_mc_block_id().await?;
+        let latest_block = self.get_last_mc_block_id().await?;
 
         let config = self.inner.client.get_config(&latest_block).await?;
         let state_proof = Boc::decode(&config.config_proof)?
@@ -159,7 +159,7 @@ impl Transport for TonLiteTransport {
         Ok(config)
     }
 
-    async fn get_transaction(&self, hash: &HashBytes) -> Result<Option<Transaction>> {
+    async fn get_transaction(&self, _: &HashBytes) -> Result<Option<Transaction>> {
         todo!()
     }
 }
