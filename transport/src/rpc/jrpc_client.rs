@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use anyhow::Result;
 use everscale_types::models::*;
 use everscale_types::prelude::*;
 use nekoton_core::transport::{ContractState, LatestBlockchainConfig};
@@ -99,12 +100,30 @@ impl JrpcClient {
         .await
     }
 
-    pub async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
+    pub async fn get_config(&self) -> Result<LatestBlockchainConfig> {
         self.post(&JrpcRequest {
             method: "getBlockchainConfig",
             params: &(),
         })
         .await
+    }
+
+    pub async fn get_transaction(&self, hash: &HashBytes) -> Result<Option<Transaction>> {
+
+        #[derive(Serialize)]
+        struct Params<'a> {
+            #[serde(default, with = "serde_hex_array")]
+            hash: &'a HashBytes,
+        }
+
+        self.post(&JrpcRequest {
+            method: "getTransaction",
+            params: &Params {
+                hash,
+            }
+        }).await
+
+        //todo: raw transaction here
     }
 }
 
@@ -114,7 +133,7 @@ struct JrpcRequest<'a, T> {
 }
 
 impl<T: Serialize> Serialize for JrpcRequest<'_, T> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
@@ -138,7 +157,7 @@ impl<'de, T> Deserialize<'de> for JrpcResponse<T>
 where
     T: Deserialize<'de>,
 {
-    fn deserialize<D>(de: D) -> std::result::Result<Self, D::Error>
+    fn deserialize<D>(de: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
