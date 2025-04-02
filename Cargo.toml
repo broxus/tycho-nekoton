@@ -19,8 +19,7 @@ members = [
 # crates.io deps
 anyhow = "1.0"
 async-trait = "0.1"
-everscale-crypto = { version = "0.2", features = ["tl-proto", "serde"] }
-everscale-types = { version = "0.1.2", features = ["tycho", "abi"] }
+everscale-types = { git = "https://github.com/broxus/everscale-types.git", features = ["tycho", "abi"] }
 futures-util = "0.3"
 num-bigint = "0.4.6"
 num-traits = "0.2"
@@ -31,6 +30,7 @@ serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0"
 tokio = { version = "1", default-features = false }
+tl-proto = "0.5.3"
 
 case = "1.0.0"
 proc-macro2 = "1.0"
@@ -39,6 +39,9 @@ syn = { version = "2.0", features = ["visit", "parsing"] }
 
 tycho-executor = { git = "https://github.com/broxus/tycho-vm.git" }
 tycho-vm = { git = "https://github.com/broxus/tycho-vm.git" }
+
+ton-lite-client = { git = "https://github.com/broxus/tycho-l2.git" }
+proof-api-util = {git = "https://github.com/broxus/tycho-l2.git"}
 
 # local deps
 nekoton-core = { path = "./core" }

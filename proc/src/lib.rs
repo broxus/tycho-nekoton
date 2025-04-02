@@ -88,7 +88,8 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         trait_implementations.push(struct_traits)
     }
 
-    let header_type: syn::Type = syn::parse_str("everscale_types::contracts::AbiHeaderType").unwrap();
+    let header_type: syn::Type =
+        syn::parse_str("everscale_types::contracts::AbiHeaderType").unwrap();
     let abi_type: syn::Type = syn::parse_str("everscale_types::contracts::AbiVersion").unwrap();
 
     let mut header_idents = Vec::<proc_macro2::TokenStream>::new();

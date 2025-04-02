@@ -4,6 +4,7 @@ use std::sync::Arc;
 use everscale_types::models::*;
 use everscale_types::prelude::*;
 use nekoton_core::transport::{ContractState, LatestBlockchainConfig};
+use nekoton_utils::serde_helpers::*;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +51,8 @@ impl JrpcClient {
 }
 
 impl JrpcClient {
-    pub async fn broadcast_message(&self, message: &DynCell) -> anyhow::Result<()> {
+    pub async fn broadcast_message(&self, message: &OwnedMessage) -> anyhow::Result<()> {
+        let message_cell = CellBuilder::build_from(message)?;
         #[derive(Serialize)]
         struct Params<'a> {
             #[serde(with = "Boc")]
@@ -59,7 +61,9 @@ impl JrpcClient {
 
         self.post(&JrpcRequest {
             method: "sendMessage",
-            params: &Params { message },
+            params: &Params {
+                message: message_cell.as_ref(),
+            },
         })
         .await
     }
@@ -73,15 +77,24 @@ impl JrpcClient {
         self.post::<_, Timings>(&request).await
     }
 
-    pub async fn get_contract_state(&self, address: &StdAddr) -> anyhow::Result<ContractState> {
+    pub async fn get_contract_state(
+        &self,
+        address: &StdAddr,
+        last_transaction_lt: Option<u64>,
+    ) -> anyhow::Result<ContractState> {
         #[derive(Serialize)]
         struct Params<'a> {
             address: &'a StdAddr,
+            #[serde(default, with = "serde_optional_u64")]
+            last_transaction_lt: Option<u64>,
         }
 
         self.post(&JrpcRequest {
             method: "getContractState",
-            params: &Params { address },
+            params: &Params {
+                address,
+                last_transaction_lt,
+            },
         })
         .await
     }
