@@ -14,12 +14,14 @@ async-trait = { workspace = true }
 everscale-types = { workspace = true }
 futures-util = { workspace = true }
 parking_lot = { workspace = true }
+proof-api-util = { workspace = true }
 rand = { workspace = true }
 reqwest = { workspace = true, features = ["gzip", "http2", "json"] }
 serde = { workspace = true }
 serde_json = { workspace = true, features = ["raw_value"] }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+ton-lite-client = {workspace = true}
 
 # local deps
 nekoton-core = { workspace = true }

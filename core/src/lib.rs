@@ -1,3 +1,3 @@
-pub mod transport;
 pub mod contracts;
-mod models;
+pub mod models;
+pub mod transport;

@@ -1,3 +1,7 @@
+use super::function_ext::{ExecutionOutput, FunctionExt};
+use super::local_vm::{LocalVmBuilder, VmGetterOutput};
+use super::utils::get_gen_timings;
+use crate::models::GenTimings;
 use anyhow::Result;
 use everscale_types::abi::{Function, NamedAbiValue};
 use everscale_types::cell::HashBytes;
@@ -9,10 +13,6 @@ use everscale_types::prelude::{Cell, CellBuilder, CellFamily, Dict};
 use nekoton_utils::time::{Clock, SimpleClock};
 use num_bigint::BigInt;
 use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
-use crate::models::GenTimings;
-use super::function_ext::{ExecutionOutput, FunctionExt};
-use super::local_vm::{LocalVmBuilder, VmGetterOutput};
-use super::utils::get_gen_timings;
 
 #[derive(Clone)]
 pub struct ExecutionContext<'a> {
@@ -67,7 +67,8 @@ impl ExecutionContext<'_> {
     where
         M: AsGetterMethodId + ?Sized,
     {
-        let GenTimings {gen_utime, gen_lt} = get_gen_timings(self.clock, self.account.last_trans_lt);
+        let GenTimings { gen_utime, gen_lt } =
+            get_gen_timings(self.clock, self.account.last_trans_lt);
         let mut stack_values = Vec::with_capacity(args.len() + 1);
         for i in args {
             stack_values.push(i.clone())

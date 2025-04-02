@@ -1,3 +1,7 @@
+use super::execution_context::MessageBuilder;
+use super::local_executor;
+use super::utils::get_gen_timings;
+use crate::models::GenTimings;
 use anyhow::{anyhow, Result};
 use everscale_types::abi::{AbiValue, Function, NamedAbiValue};
 use everscale_types::cell::HashBytes;
@@ -7,10 +11,6 @@ use everscale_types::prelude::Dict;
 use nekoton_utils::time::Clock;
 use num_traits::cast::ToPrimitive;
 use tycho_vm::{BehaviourModifiers, OwnedCellSlice};
-use crate::models::GenTimings;
-use super::execution_context::MessageBuilder;
-use super::local_executor;
-use super::utils::get_gen_timings;
 
 pub trait FunctionExt {
     #[allow(clippy::too_many_arguments)]
@@ -67,7 +67,7 @@ impl FunctionExt for Function {
                 .build()
         };
 
-        let GenTimings {gen_utime, gen_lt} = get_gen_timings(clock, account.last_trans_lt);
+        let GenTimings { gen_utime, gen_lt } = get_gen_timings(clock, account.last_trans_lt);
 
         let compute_phase_result = local_executor::execute_message(
             gen_utime,

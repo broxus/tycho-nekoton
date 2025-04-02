@@ -1,7 +1,7 @@
+use crate::models::GenTimings;
 use everscale_types::abi::{AbiValue, NamedAbiValue};
 use nekoton_utils::time::Clock;
 use num_bigint::BigUint;
-use crate::models::GenTimings;
 
 const ANSWER_ID: &str = "_answer_id";
 pub fn answer_id() -> NamedAbiValue {
@@ -18,5 +18,5 @@ pub fn get_gen_timings(clock: &dyn Clock, last_transaction_tl: u64) -> GenTiming
         )
     };
 
-    GenTimings {gen_utime, gen_lt}
+    GenTimings { gen_utime, gen_lt }
 }
