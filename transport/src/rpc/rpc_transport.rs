@@ -1,6 +1,6 @@
 use crate::rpc::rpc_connection::{Connection, RpcConnection};
 use everscale_types::cell::HashBytes;
-use everscale_types::models::{Message, OwnedMessage, StdAddr, Transaction};
+use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
 use futures_util::StreamExt;
 use nekoton_core::transport::{ContractState, LatestBlockchainConfig, Transport};
 use parking_lot::RwLock;
