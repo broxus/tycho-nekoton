@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["string"],"struct":["BorrowedStr"]};
+window.SIDEBAR_ITEMS = {"mod":["serde_bytes","serde_hex_array","serde_optional_u64","string"],"struct":["BorrowedStr"]};

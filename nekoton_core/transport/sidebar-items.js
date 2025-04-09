@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ContractState"],"struct":["LatestBlockchainConfig"],"trait":["Transport"]};
+window.SIDEBAR_ITEMS = {"trait":["Transport"]};
