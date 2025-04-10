@@ -50,10 +50,12 @@ pub fn execute_message(
 
     let mut state = executor.begin(std_addr, Some(account))?;
     let received_message = state.receive_in_msg(in_msg_cell)?;
+    
     let compute_phase_result = state.compute_phase(ComputePhaseContext {
         input: TransactionInput::Ordinary(&received_message),
         storage_fee: Tokens::ZERO,
         force_accept: true,
+        inspector: None,
     })?;
 
     let executed_compute_phase = match compute_phase_result.compute_phase {

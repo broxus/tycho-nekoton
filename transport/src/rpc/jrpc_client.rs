@@ -109,7 +109,6 @@ impl JrpcClient {
     }
 
     pub async fn get_transaction(&self, hash: &HashBytes) -> Result<Option<Transaction>> {
-
         #[derive(Serialize)]
         struct Params<'a> {
             #[serde(default, with = "serde_hex_array")]
@@ -118,10 +117,9 @@ impl JrpcClient {
 
         self.post(&JrpcRequest {
             method: "getTransaction",
-            params: &Params {
-                hash,
-            }
-        }).await
+            params: &Params { hash },
+        })
+        .await
 
         //todo: raw transaction here
     }

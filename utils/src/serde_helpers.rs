@@ -81,7 +81,6 @@ pub mod serde_optional_u64 {
     }
 }
 
-
 pub mod serde_hex_array {
     use super::*;
 
