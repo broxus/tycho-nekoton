@@ -1,15 +1,21 @@
-use crate::rpc::rpc_connection::{Connection, RpcConnection};
-use everscale_types::cell::HashBytes;
-use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
-use futures_util::StreamExt;
-use nekoton_core::transport::{ContractState, LatestBlockchainConfig, Transport};
-use parking_lot::RwLock;
-use reqwest::Url;
-use serde::{Deserialize, Serialize};
 use std::future::Future;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
+
+use everscale_types::cell::HashBytes;
+use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
+use everscale_types::prelude::CellBuilder;
+use futures_util::StreamExt;
+use nekoton_core::models::{ContractState, LatestBlockchainConfig};
+use parking_lot::RwLock;
+use reqwest::Url;
+use serde::{Deserialize, Serialize};
+
+
+use crate::options::BlockchainOptions;
+use crate::rpc::rpc_connection::RpcConnection;
+use crate::{Connection, Transport};
 
 static ROUND_ROBIN_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
@@ -21,13 +27,15 @@ pub struct RpcTransport {
 struct Inner {
     endpoints: Vec<RpcConnection>,
     live_endpoints: RwLock<Vec<RpcConnection>>,
-    options: ClientOptions,
+    options: TransportOptions,
+
+    bc_options: BlockchainOptions,
 }
 
 impl RpcTransport {
     pub async fn new<I: IntoIterator<Item = Url> + Send>(
         endpoints: I,
-        options: ClientOptions,
+        options: TransportOptions,
     ) -> anyhow::Result<Self> {
         let client = reqwest::Client::builder()
             .timeout(options.request_timeout)
@@ -49,6 +57,7 @@ impl RpcTransport {
                 endpoints,
                 options,
                 live_endpoints: Default::default(),
+                bc_options: Default::default(),
             }),
         };
 
@@ -109,11 +118,12 @@ impl RpcTransport {
             match f(client.clone()).await {
                 Ok(result) => return Ok(result),
                 Err(e) => {
-                    if tries == NUM_RETRIES - 1 {
+                    if tries >= NUM_RETRIES - 1 {
                         return Err(e);
                     }
 
-                    self.remove_endpoint(client.endpoint());
+                    let endpoint = client.endpoint();
+                    self.remove_endpoint(endpoint);
 
                     tokio::time::sleep(self.inner.options.aggressive_poll_interval).await;
                 }
@@ -150,9 +160,30 @@ impl RpcTransport {
 
 #[async_trait::async_trait]
 impl Transport for RpcTransport {
-    async fn broadcast_message(&self, message: &OwnedMessage) -> anyhow::Result<()> {
-        self.with_retries(|instance| async move { instance.broadcast_message(message).await })
+    async fn send_message(&self, message: &OwnedMessage) -> anyhow::Result<()> {
+        self.with_retries(|instance| async move { instance.send_message(message).await })
             .await
+    }
+
+    async fn send_message_reliable(&self, message: &OwnedMessage) -> anyhow::Result<Transaction> {
+        self.send_message(message).await?;
+
+        let cell = CellBuilder::build_from(message)?;
+        let hash = cell.repr_hash();
+
+        for i in 0..self.inner.bc_options.message_poll_attempts {
+            let transaction = self
+                .with_retries(|instance| async move { instance.get_dst_transaction(*hash).await })
+                .await?;
+
+            if let Some(transaction) = transaction {
+                return Ok(transaction);
+            }
+
+            tokio::time::sleep(self.inner.bc_options.message_poll_interval).await;
+        }
+
+        Err(TransportError::MessageTimeout.into())
     }
 
     async fn get_contract_state(
@@ -180,7 +211,7 @@ impl Transport for RpcTransport {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ClientOptions {
+pub struct TransportOptions {
     /// How often the probe should update health statuses.
     ///
     /// Default: `1 sec`
@@ -202,7 +233,7 @@ pub struct ClientOptions {
     pub choose_strategy: ChooseStrategy,
 }
 
-impl Default for ClientOptions {
+impl Default for TransportOptions {
     fn default() -> Self {
         Self {
             probe_interval: Duration::from_secs(1),
@@ -243,6 +274,8 @@ impl ChooseStrategy {
 pub enum TransportError {
     #[error("No rpc available")]
     NoEndpointsAvailable,
+    #[error("Message processing timed out")]
+    MessageTimeout,
 }
 
 #[cfg(test)]
@@ -262,7 +295,7 @@ mod test {
 
         let _client = RpcTransport::new(
             endpoints,
-            ClientOptions {
+            TransportOptions {
                 probe_interval: Duration::from_secs(10),
                 ..Default::default()
             },
@@ -281,7 +314,7 @@ mod test {
 
         let client = RpcTransport::new(
             endpoints,
-            ClientOptions {
+            TransportOptions {
                 probe_interval: Duration::from_secs(10),
                 ..Default::default()
             },

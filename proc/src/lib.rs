@@ -1,10 +1,10 @@
 extern crate proc_macro;
 
-use std::fs;
 use everscale_types::abi::{AbiHeaderType, Contract};
 use proc_macro::TokenStream;
-use std::path::Path;
 use quote::quote;
+use std::fs;
+use std::path::Path;
 use syn::parse::{Parse, ParseStream};
 use syn::Result;
 use syn::{parse_macro_input, ItemMod};
@@ -13,7 +13,6 @@ use crate::generator::{FunctionDescriptionTokens, StructGenerator};
 
 mod generator;
 mod properties;
-
 
 struct ModuleParams {
     path: String,
@@ -79,8 +78,7 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         generated_structs.extend_from_slice(inner_models.as_slice());
     });
 
-    let header_type: syn::Type =
-        syn::parse_str("everscale_types::abi::AbiHeaderType").unwrap();
+    let header_type: syn::Type = syn::parse_str("everscale_types::abi::AbiHeaderType").unwrap();
     let abi_type: syn::Type = syn::parse_str("everscale_types::abi::AbiVersion").unwrap();
 
     let mut header_idents = Vec::<proc_macro2::TokenStream>::new();

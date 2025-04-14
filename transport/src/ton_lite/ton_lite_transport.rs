@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use everscale_types::boc::BocRepr;
-use everscale_types::cell::HashBytes;
+use everscale_types::cell::{CellBuilder, HashBytes};
 use everscale_types::merkle::MerkleProof;
 use everscale_types::models::{BlockId, OptionalAccount, OwnedMessage, StdAddr, Transaction};
 use everscale_types::prelude::{Boc, Cell, CellFamily, CellSlice, Load};
@@ -11,9 +11,11 @@ use tokio::sync::Mutex;
 use tokio::task::AbortHandle;
 use ton_lite_client::{LiteClient, LiteClientConfig, NodeInfo};
 
+use crate::options::BlockchainOptions;
 use crate::ton_lite::models::{ParsedProofs, TonMcStateExtraShort};
+use crate::Transport;
 use nekoton_core::models::GenTimings;
-use nekoton_core::transport::{ContractState, LatestBlockchainConfig, Transport};
+use nekoton_core::models::{ContractState, LatestBlockchainConfig};
 
 pub struct TonLiteTransport {
     inner: Arc<Inner>,
@@ -25,6 +27,8 @@ struct Inner {
     last_mc_block: Arc<Mutex<Option<BlockId>>>,
     ping_interval: Duration,
     mc_block_task: Option<AbortHandle>,
+
+    bc_options: BlockchainOptions,
 }
 
 impl Clone for Inner {
@@ -32,8 +36,9 @@ impl Clone for Inner {
         Self {
             client: self.client.clone(),
             last_mc_block: self.last_mc_block.clone(),
-            ping_interval: self.ping_interval.clone(),
+            ping_interval: self.ping_interval,
             mc_block_task: None,
+            bc_options: self.bc_options.clone(),
         }
     }
 }
@@ -62,6 +67,7 @@ impl TonLiteTransport {
             ping_interval: Duration::from_secs(5),
 
             mc_block_task: None,
+            bc_options: Default::default(),
         };
 
         inner.mc_block_task =
@@ -75,7 +81,7 @@ impl TonLiteTransport {
     async fn get_last_mc_block_id(&self) -> Result<BlockId> {
         let guard = self.inner.last_mc_block.lock().await;
         match guard.as_ref() {
-            Some(block) => Ok(block.clone()),
+            Some(block) => Ok(*block),
             None => self.inner.client.get_last_mc_block_id().await,
         }
     }
@@ -83,10 +89,14 @@ impl TonLiteTransport {
 
 #[async_trait::async_trait]
 impl Transport for TonLiteTransport {
-    async fn broadcast_message(&self, message: &OwnedMessage) -> Result<()> {
+    async fn send_message(&self, message: &OwnedMessage) -> Result<()> {
         let message_bytes = BocRepr::encode(message)?;
         let _result = self.inner.client.send_message(message_bytes).await?;
         Ok(())
+    }
+
+    async fn send_message_reliable(&self, message: &OwnedMessage) -> Result<Transaction> {
+        todo!()
     }
 
     async fn get_contract_state(

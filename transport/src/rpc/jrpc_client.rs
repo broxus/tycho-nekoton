@@ -4,7 +4,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use everscale_types::models::*;
 use everscale_types::prelude::*;
-use nekoton_core::transport::{ContractState, LatestBlockchainConfig};
+use nekoton_core::models::{ContractState, LatestBlockchainConfig};
 use nekoton_utils::serde_helpers::*;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
@@ -18,7 +18,7 @@ pub struct JrpcClient {
 }
 
 impl JrpcClient {
-    pub async fn post<Q, R>(&self, data: &Q) -> anyhow::Result<R>
+    pub async fn post<Q, R>(&self, data: &Q) -> Result<R>
     where
         Q: Serialize,
         for<'de> R: Deserialize<'de>,
@@ -52,7 +52,7 @@ impl JrpcClient {
 }
 
 impl JrpcClient {
-    pub async fn broadcast_message(&self, message: &OwnedMessage) -> anyhow::Result<()> {
+    pub async fn send_message(&self, message: &OwnedMessage) -> Result<()> {
         let message_cell = CellBuilder::build_from(message)?;
         #[derive(Serialize)]
         struct Params<'a> {
@@ -69,7 +69,32 @@ impl JrpcClient {
         .await
     }
 
-    pub async fn get_timings(&self) -> anyhow::Result<Timings> {
+    pub async fn get_dst_transaction(
+        &self,
+        message_hash: HashBytes,
+    ) -> Result<Option<Transaction>> {
+        #[derive(Serialize)]
+        struct Params {
+            message_hash: HashBytes,
+        }
+
+        let transaction_boc = self
+            .post::<_, Option<String>>(&JrpcRequest {
+                method: "getDstTransaction",
+                params: &Params { message_hash },
+            })
+            .await?;
+
+        match transaction_boc {
+            None => Ok(None),
+            Some(transaction_boc) => {
+                let transaction = BocRepr::decode_base64(transaction_boc.as_str())?;
+                Ok(Some(transaction))
+            }
+        }
+    }
+
+    pub async fn get_timings(&self) -> Result<Timings> {
         let request = JrpcRequest {
             method: "getTimings",
             params: &(),

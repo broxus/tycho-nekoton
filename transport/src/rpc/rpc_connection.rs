@@ -1,12 +1,16 @@
-use crate::models::Timings;
-use crate::rpc::jrpc_client;
-use everscale_types::cell::HashBytes;
-use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
-use nekoton_core::transport::{ContractState, LatestBlockchainConfig};
-use parking_lot::Mutex;
-use reqwest::Url;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+
+use anyhow::Result;
+use everscale_types::cell::HashBytes;
+use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
+use nekoton_core::models::{ContractState, LatestBlockchainConfig};
+use parking_lot::Mutex;
+use reqwest::Url;
+
+use crate::models::Timings;
+use crate::rpc::jrpc_client;
+use crate::Connection;
 
 #[derive(Clone)]
 pub struct RpcConnection {
@@ -18,7 +22,7 @@ pub struct RpcConnection {
 #[derive(Clone)]
 pub enum RpcType {
     Jrpc(jrpc_client::JrpcClient),
-    Proto,
+    Proto, //TODO: implement proto
 }
 
 impl RpcConnection {
@@ -38,9 +42,19 @@ impl RpcConnection {
             }
         }
     }
-    pub(crate) async fn broadcast_message(&self, message: &OwnedMessage) -> anyhow::Result<()> {
+    pub(crate) async fn send_message(&self, message: &OwnedMessage) -> Result<()> {
         match &self.rpc_type {
-            RpcType::Jrpc(client) => client.broadcast_message(message).await,
+            RpcType::Jrpc(client) => client.send_message(message).await,
+            RpcType::Proto => todo!(),
+        }
+    }
+
+    pub(crate) async fn get_dst_transaction(
+        &self,
+        hash_bytes: HashBytes,
+    ) -> Result<Option<Transaction>> {
+        match &self.rpc_type {
+            RpcType::Jrpc(client) => client.get_dst_transaction(hash_bytes).await,
             RpcType::Proto => todo!(),
         }
     }
@@ -60,7 +74,7 @@ impl RpcConnection {
         }
     }
 
-    pub(crate) async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
+    pub(crate) async fn get_config(&self) -> Result<LatestBlockchainConfig> {
         match &self.rpc_type {
             RpcType::Jrpc(client) => client.get_config().await,
             RpcType::Proto => todo!(),
@@ -70,7 +84,7 @@ impl RpcConnection {
     pub(crate) async fn get_transaction(
         &self,
         hash_bytes: &HashBytes,
-    ) -> anyhow::Result<Option<Transaction>> {
+    ) -> Result<Option<Transaction>> {
         match &self.rpc_type {
             RpcType::Jrpc(jrpc_client) => jrpc_client.get_transaction(hash_bytes).await,
             RpcType::Proto => todo!(),
@@ -135,21 +149,6 @@ impl Ord for RpcConnection {
             }
         }
     }
-}
-
-#[async_trait::async_trait]
-pub trait Connection: Send + Sync {
-    async fn is_alive(&self) -> bool;
-
-    fn endpoint(&self) -> &str;
-
-    fn get_stats(&self) -> Option<Timings>;
-
-    fn set_stats(&self, stats: Option<Timings>);
-
-    fn force_update_is_alive(&self, is_alive: bool);
-
-    async fn update_is_alive_internally(&self);
 }
 
 #[async_trait::async_trait]
