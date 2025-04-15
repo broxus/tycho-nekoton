@@ -51,10 +51,10 @@ impl RpcConnection {
 
     pub(crate) async fn get_dst_transaction(
         &self,
-        hash_bytes: HashBytes,
+        hash_bytes: &HashBytes,
     ) -> Result<Option<Transaction>> {
         match &self.rpc_type {
-            RpcType::Jrpc(client) => client.get_dst_transaction(hash_bytes).await,
+            RpcType::Jrpc(client) => client.get_dst_transaction(*hash_bytes).await,
             RpcType::Proto => todo!(),
         }
     }

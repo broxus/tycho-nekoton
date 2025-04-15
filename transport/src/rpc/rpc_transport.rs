@@ -12,7 +12,6 @@ use parking_lot::RwLock;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
-
 use crate::options::BlockchainOptions;
 use crate::rpc::rpc_connection::RpcConnection;
 use crate::{Connection, Transport};
@@ -171,9 +170,9 @@ impl Transport for RpcTransport {
         let cell = CellBuilder::build_from(message)?;
         let hash = cell.repr_hash();
 
-        for i in 0..self.inner.bc_options.message_poll_attempts {
+        for _ in 0..self.inner.bc_options.message_poll_attempts {
             let transaction = self
-                .with_retries(|instance| async move { instance.get_dst_transaction(*hash).await })
+                .with_retries(|instance| async move { instance.get_dst_transaction(hash).await })
                 .await?;
 
             if let Some(transaction) = transaction {
@@ -207,6 +206,16 @@ impl Transport for RpcTransport {
     async fn get_transaction(&self, hash: &HashBytes) -> anyhow::Result<Option<Transaction>> {
         self.with_retries(|instance| async move { instance.get_transaction(hash).await })
             .await
+    }
+
+    async fn get_dst_transaction(
+        &self,
+        message_hash: &HashBytes,
+    ) -> anyhow::Result<Option<Transaction>> {
+        self.with_retries(
+            |instance| async move { instance.get_dst_transaction(message_hash).await },
+        )
+        .await
     }
 }
 

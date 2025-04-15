@@ -8,23 +8,21 @@ pub mod models;
 pub mod options;
 pub mod rpc;
 pub mod ton_lite;
+mod traced_transaction;
 mod utils;
 
 #[async_trait::async_trait]
 pub trait Transport: Send + Sync {
     async fn send_message(&self, message: &OwnedMessage) -> Result<()>;
-
     async fn send_message_reliable(&self, message: &OwnedMessage) -> Result<Transaction>;
-
     async fn get_contract_state(
         &self,
         address: &StdAddr,
         last_transaction_lt: Option<u64>,
     ) -> Result<ContractState>;
-
     async fn get_config(&self) -> Result<LatestBlockchainConfig>;
-
     async fn get_transaction(&self, hash: &HashBytes) -> Result<Option<Transaction>>;
+    async fn get_dst_transaction(&self, message_hash: &HashBytes) -> Result<Option<Transaction>>;
 }
 
 #[async_trait::async_trait]

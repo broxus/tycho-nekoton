@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use everscale_types::boc::BocRepr;
-use everscale_types::cell::{CellBuilder, HashBytes};
+use everscale_types::cell::HashBytes;
 use everscale_types::merkle::MerkleProof;
 use everscale_types::models::{BlockId, OptionalAccount, OwnedMessage, StdAddr, Transaction};
 use everscale_types::prelude::{Boc, Cell, CellFamily, CellSlice, Load};
@@ -95,7 +95,7 @@ impl Transport for TonLiteTransport {
         Ok(())
     }
 
-    async fn send_message_reliable(&self, message: &OwnedMessage) -> Result<Transaction> {
+    async fn send_message_reliable(&self, _: &OwnedMessage) -> Result<Transaction> {
         todo!()
     }
 
@@ -170,6 +170,10 @@ impl Transport for TonLiteTransport {
     }
 
     async fn get_transaction(&self, _: &HashBytes) -> Result<Option<Transaction>> {
+        todo!()
+    }
+
+    async fn get_dst_transaction(&self, _: &HashBytes) -> Result<Option<Transaction>> {
         todo!()
     }
 }
