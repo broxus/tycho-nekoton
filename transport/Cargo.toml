@@ -17,7 +17,7 @@ parking_lot = { workspace = true }
 pin-project = {workspace = true}
 proof-api-util = { workspace = true }
 rand = { workspace = true }
-reqwest = { workspace = true, features = ["gzip", "http2", "json"] }
+reqwest = { workspace = true, features = ["gzip", "http2", "json", "rustls-tls"] }
 serde = { workspace = true }
 serde_json = { workspace = true, features = ["raw_value"] }
 thiserror = { workspace = true }

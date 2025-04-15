@@ -74,6 +74,7 @@ impl JrpcClient {
         message_hash: HashBytes,
     ) -> Result<Option<Transaction>> {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Params {
             message_hash: HashBytes,
         }
@@ -137,16 +138,22 @@ impl JrpcClient {
         #[derive(Serialize)]
         struct Params<'a> {
             #[serde(default, with = "serde_hex_array")]
-            hash: &'a HashBytes,
+            id: &'a HashBytes,
         }
-
-        self.post(&JrpcRequest {
+        let params = JrpcRequest {
             method: "getTransaction",
-            params: &Params { hash },
-        })
-        .await
+            params: &Params { id: hash },
+        };
 
-        //todo: raw transaction here
+        let transaction_boc = self.post::<_, Option<String>>(&params).await?;
+
+        match transaction_boc {
+            None => Ok(None),
+            Some(transaction_boc) => {
+                let transaction = BocRepr::decode_base64(transaction_boc.as_str())?;
+                Ok(Some(transaction))
+            }
+        }
     }
 }
 

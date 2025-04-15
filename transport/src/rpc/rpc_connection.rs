@@ -26,17 +26,16 @@ pub enum RpcType {
 }
 
 impl RpcConnection {
-    pub(crate) fn new(endpoint: Url, client: reqwest::Client) -> Self {
-        let is_jrpc = endpoint.path().ends_with("/rpc");
-        if is_jrpc {
+    pub(crate) fn new(endpoint: Url, client: reqwest::Client, use_proto: bool) -> Self {
+        if !use_proto {
             Self {
-                is_available: Arc::new(Default::default()),
+                is_available: Arc::new(AtomicBool::new(true)),
                 rpc_type: RpcType::Jrpc(jrpc_client::JrpcClient::new(endpoint, client)),
                 stats: Arc::new(Default::default()),
             }
         } else {
             Self {
-                is_available: Arc::new(Default::default()),
+                is_available: Arc::new(AtomicBool::new(true)),
                 rpc_type: RpcType::Proto,
                 stats: Arc::new(Default::default()),
             }

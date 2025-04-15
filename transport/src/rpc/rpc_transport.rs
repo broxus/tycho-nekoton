@@ -35,6 +35,7 @@ impl RpcTransport {
     pub async fn new<I: IntoIterator<Item = Url> + Send>(
         endpoints: I,
         options: TransportOptions,
+        use_proto: bool,
     ) -> anyhow::Result<Self> {
         let client = reqwest::Client::builder()
             .timeout(options.request_timeout)
@@ -48,7 +49,7 @@ impl RpcTransport {
 
         let endpoints = endpoints
             .into_iter()
-            .map(|endpoint| RpcConnection::new(endpoint, client.clone()))
+            .map(|endpoint| RpcConnection::new(endpoint, client.clone(), use_proto))
             .collect();
 
         let transport = Self {
@@ -245,7 +246,7 @@ pub struct TransportOptions {
 impl Default for TransportOptions {
     fn default() -> Self {
         Self {
-            probe_interval: Duration::from_secs(1),
+            probe_interval: Duration::from_secs(5),
             request_timeout: Duration::from_secs(3),
             aggressive_poll_interval: Duration::from_secs(1),
             choose_strategy: ChooseStrategy::Random,
@@ -308,6 +309,7 @@ mod test {
                 probe_interval: Duration::from_secs(10),
                 ..Default::default()
             },
+            false,
         )
         .await?;
 
@@ -327,6 +329,7 @@ mod test {
                 probe_interval: Duration::from_secs(10),
                 ..Default::default()
             },
+            false,
         )
         .await?;
 
