@@ -6,10 +6,9 @@ use everscale_types::models::*;
 use everscale_types::prelude::*;
 use nekoton_core::models::{ContractState, LatestBlockchainConfig};
 use nekoton_utils::serde_helpers::*;
+use nekoton_utils::time::Timings;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-
-use crate::models::Timings;
 
 #[derive(Clone)]
 pub struct JrpcClient {

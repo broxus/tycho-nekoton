@@ -12,7 +12,7 @@ pub enum ContractState {
     #[serde(rename_all = "camelCase")]
     Exists {
         #[serde(deserialize_with = "deserialize_account")]
-        account: Box<Account>,
+        account: Account,
         timings: GenTimings,
         last_transaction_id: LastTransactionId,
     },
@@ -21,22 +21,22 @@ pub enum ContractState {
     },
 }
 
-fn deserialize_account<'de, D>(deserializer: D) -> Result<Box<Account>, D::Error>
+fn deserialize_account<'de, D>(deserializer: D) -> Result<Account, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
     use everscale_types::cell::Load;
     use serde::de::Error;
 
-    fn read_account(cell: Cell) -> Result<Box<Account>, everscale_types::error::Error> {
+    fn read_account(cell: Cell) -> Result<Account, everscale_types::error::Error> {
         let s = &mut cell.as_slice()?;
-        Ok(Box::new(Account {
+        Ok(Account {
             address: <_>::load_from(s)?,
             storage_stat: <_>::load_from(s)?,
             last_trans_lt: <_>::load_from(s)?,
             balance: <_>::load_from(s)?,
             state: <_>::load_from(s)?,
-        }))
+        })
     }
 
     Boc::deserialize(deserializer).and_then(|cell| read_account(cell).map_err(Error::custom))

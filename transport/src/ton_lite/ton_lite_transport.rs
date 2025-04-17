@@ -4,6 +4,9 @@ use everscale_types::cell::HashBytes;
 use everscale_types::merkle::MerkleProof;
 use everscale_types::models::{BlockId, OptionalAccount, OwnedMessage, StdAddr, Transaction};
 use everscale_types::prelude::{Boc, Cell, CellFamily, CellSlice, Load};
+use nekoton_core::models::GenTimings;
+use nekoton_core::models::{ContractState, LatestBlockchainConfig};
+use nekoton_core::transport::Transport;
 use proof_api_util::block::{BlockchainBlock, BlockchainModels, TonModels};
 use std::sync::Arc;
 use std::time::Duration;
@@ -13,9 +16,6 @@ use ton_lite_client::{LiteClient, LiteClientConfig, NodeInfo};
 
 use crate::options::BlockchainOptions;
 use crate::ton_lite::models::{ParsedProofs, TonMcStateExtraShort};
-use crate::Transport;
-use nekoton_core::models::GenTimings;
-use nekoton_core::models::{ContractState, LatestBlockchainConfig};
 
 pub struct TonLiteTransport {
     inner: Arc<Inner>,
@@ -138,7 +138,7 @@ impl Transport for TonLiteTransport {
         };
 
         Ok(ContractState::Exists {
-            account: Box::new(account),
+            account,
             timings: proofs.timings,
             last_transaction_id,
         })

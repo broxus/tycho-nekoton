@@ -1,43 +1,86 @@
+use std::sync::Arc;
+
+use anyhow::Result;
+use everscale_types::abi::{Function, NamedAbiValue};
+use everscale_types::crc::crc_16;
+use everscale_types::models::{
+    Account, BlockchainConfig, ExtInMsgInfo, IntAddr, IntMsgInfo, MsgInfo, OwnedMessage, StdAddr,
+    Transaction,
+};
+use everscale_types::prelude::{Cell, CellBuilder, CellFamily, DynCell};
+use nekoton_utils::time::{Clock, SimpleClock};
+use num_bigint::BigInt;
+use tycho_executor::ExecutorParams;
+use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
+
+use crate::models::{ContractState, GenTimings};
+use crate::transport::Transport;
+
 use super::function_ext::{ExecutionOutput, FunctionExt};
 use super::local_vm::{LocalVmBuilder, VmGetterOutput};
 use super::utils::get_gen_timings;
-use crate::models::GenTimings;
-use anyhow::Result;
-use everscale_types::abi::{Function, NamedAbiValue};
-use everscale_types::cell::HashBytes;
-use everscale_types::crc::crc_16;
-use everscale_types::models::{
-    Account, BlockchainConfig, ExtInMsgInfo, IntAddr, IntMsgInfo, LibDescr, MsgInfo, OwnedMessage,
-};
-use everscale_types::prelude::{Cell, CellBuilder, CellFamily, Dict};
-use nekoton_utils::time::{Clock, SimpleClock};
-use num_bigint::BigInt;
-use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
 
 #[derive(Clone)]
-pub struct ExecutionContext<'a> {
-    clock: &'a dyn Clock,
-    rand_seed: HashBytes,
-    libraries: Dict<HashBytes, LibDescr>,
-    config: BlockchainConfig,
+pub struct BlockchainContext {
+    desc: BlockchainDesc,
+    transport: Arc<dyn Transport>,
+    clock: Arc<dyn Clock>,
+}
+
+impl BlockchainContext {
+    pub async fn get_account(self, address: &StdAddr) -> Result<BlockchainAccount> {
+        let state = self.transport.get_contract_state(address, None).await?;
+        let account = match state {
+            ContractState::Exists { account, .. } => account,
+            ContractState::NotExists { .. } => anyhow::bail!("Account does not exist"),
+            _ => unreachable!(),
+        };
+
+        Ok(BlockchainAccount {
+            context: self,
+            account,
+        })
+    }
+
+    pub fn get_account_from_cell(self, account_cell: &DynCell) -> Result<BlockchainAccount> {
+        let account = account_cell.parse::<Account>()?;
+        Ok(BlockchainAccount {
+            context: self,
+            account,
+        })
+    }
+
+    pub fn clock(&self) -> &dyn Clock {
+        self.clock.as_ref()
+    }
+
+    pub fn config(&self) -> BlockchainConfig {
+        self.desc.config.clone()
+    }
+
+    pub fn executor_params(&self) -> Arc<ExecutorParams> {
+        self.desc.executor_params.clone()
+    }
+}
+
+pub struct BlockchainAccount {
+    context: BlockchainContext,
     account: Account,
 }
 
-impl ExecutionContext<'_> {
+#[derive(Clone)]
+pub struct BlockchainDesc {
+    pub config: BlockchainConfig,
+    pub executor_params: Arc<ExecutorParams>,
+}
+
+impl BlockchainAccount {
     pub fn run_local(
         &mut self,
         function: &Function,
         values: &[NamedAbiValue],
     ) -> Result<ExecutionOutput> {
-        function.run_local(
-            &mut self.account,
-            values,
-            self.clock,
-            false,
-            self.rand_seed,
-            self.libraries.clone(),
-            self.config.clone(),
-        )
+        function.run_local(&mut self.account, values, false, &self.context)
     }
 
     pub fn run_local_responsible(
@@ -45,15 +88,11 @@ impl ExecutionContext<'_> {
         function: &Function,
         values: &[NamedAbiValue],
     ) -> Result<ExecutionOutput> {
-        function.run_local(
-            &mut self.account,
-            values,
-            self.clock,
-            true,
-            self.rand_seed,
-            self.libraries.clone(),
-            self.config.clone(),
-        )
+        function.run_local(&mut self.account, values, true, &self.context)
+    }
+
+    pub async fn execute_message(&self, message: &OwnedMessage) -> Result<Transaction> {
+        self.context.transport.send_message_reliable(message).await
     }
 
     pub fn run_getter<M>(&self, method_id: &M, args: &[RcStackValue]) -> Result<VmGetterOutput>
@@ -68,7 +107,7 @@ impl ExecutionContext<'_> {
         M: AsGetterMethodId + ?Sized,
     {
         let GenTimings { gen_utime, gen_lt } =
-            get_gen_timings(self.clock, self.account.last_trans_lt);
+            get_gen_timings(self.context.clock.as_ref(), self.account.last_trans_lt);
         let mut stack_values = Vec::with_capacity(args.len() + 1);
         for i in args {
             stack_values.push(i.clone())
@@ -79,61 +118,59 @@ impl ExecutionContext<'_> {
 
         let local_vm = LocalVmBuilder::new()
             .with_behaviour_modifiers(BehaviourModifiers::default())
-            .with_libraries(self.libraries.clone())
-            .with_unpacked_config(self.config.clone())?
+            .with_libraries(self.context.executor_params().libraries.clone())
+            .with_unpacked_config(self.context.desc.config.clone(), gen_utime)?
             .build()?;
 
         local_vm.call_getter(gen_utime, gen_lt, &self.account, stack_values)
     }
 }
 
-pub struct ExecutionContextBuilder<'a> {
-    pub clock: Option<&'a dyn Clock>,
-    pub rand_seed: Option<HashBytes>,
-    pub libraries: Dict<HashBytes, LibDescr>,
+pub struct BlockchainContextBuilder {
+    pub clock: Arc<dyn Clock>,
+    pub executor_params: ExecutorParams,
+    pub transport: Option<Arc<dyn Transport>>,
     pub config: Option<BlockchainConfig>,
-    account: Account,
 }
 
-impl<'a> ExecutionContextBuilder<'a> {
-    pub fn new(account: &'a Account) -> ExecutionContextBuilder<'a> {
+impl<'a> BlockchainContextBuilder {
+    pub fn new() -> BlockchainContextBuilder {
         Self {
-            clock: None,
-            rand_seed: None,
-            libraries: Dict::default(),
+            clock: Arc::new(SimpleClock),
+            executor_params: ExecutorParams::default(),
+            transport: None,
             config: None,
-            account: account.clone(),
         }
     }
 
-    pub fn with_clock(mut self, clock: &'a dyn Clock) -> Self {
-        self.clock = Some(clock);
-        self
-    }
-    pub fn with_rand_seed(mut self, rand_seed: HashBytes) -> Self {
-        self.rand_seed = Some(rand_seed);
+    pub fn with_clock(mut self, clock: Arc<dyn Clock>) -> Self {
+        self.clock = clock;
         self
     }
 
-    pub fn with_libraries(mut self, libraries: Dict<HashBytes, LibDescr>) -> Self {
-        self.libraries = libraries;
-        self
-    }
     pub fn with_config(mut self, config: BlockchainConfig) -> Self {
         self.config = Some(config);
         self
     }
 
-    pub fn build(self) -> Result<ExecutionContext<'a>> {
-        Ok(ExecutionContext {
-            clock: self.clock.unwrap_or(&SimpleClock),
-            rand_seed: self.rand_seed.unwrap_or_default(),
-            libraries: self.libraries,
-            config: match self.config {
-                Some(c) => c,
-                None => anyhow::bail!("missing blockchain config"),
+    pub fn with_executor_params(mut self, executor_params: ExecutorParams) -> Self {
+        self.executor_params = executor_params;
+        self
+    }
+
+    pub fn with_transport(mut self, transport: Arc<dyn Transport>) -> Self {
+        self.transport = Some(transport);
+        self
+    }
+
+    pub fn build(self) -> Result<BlockchainContext> {
+        Ok(BlockchainContext {
+            desc: BlockchainDesc {
+                config: self.config.unwrap(),
+                executor_params: Arc::new(self.executor_params),
             },
-            account: self.account.clone(),
+            transport: self.transport.unwrap(),
+            clock: self.clock,
         })
     }
 }
@@ -152,7 +189,7 @@ impl MessageBuilder {
         });
         Self {
             info,
-            body: OwnedCellSlice::new_allow_exotic(Cell::empty_cell()), //Cell::empty_cell_ref().as_slice_allow_exotic()
+            body: OwnedCellSlice::new_allow_exotic(Cell::empty_cell()),
         }
     }
 
@@ -167,7 +204,7 @@ impl MessageBuilder {
         }
     }
 
-    pub fn with_body<T: IntoMessageBody>(mut self, body: T) -> anyhow::Result<Self> {
+    pub fn with_body<T: IntoMessageBody>(mut self, body: T) -> Result<Self> {
         self.body = body.into_message_body()?;
         Ok(self)
     }

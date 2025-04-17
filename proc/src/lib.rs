@@ -35,9 +35,7 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .expect("project root dir not found");
-    println!("root_path: {:?}", root);
     let file_path = root.join(params.path);
-    println!("file_path: {:?}", file_path);
 
     let content = fs::read_to_string(file_path).unwrap();
 

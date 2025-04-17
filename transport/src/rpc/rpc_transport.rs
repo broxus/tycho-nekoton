@@ -8,13 +8,13 @@ use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
 use everscale_types::prelude::CellBuilder;
 use futures_util::StreamExt;
 use nekoton_core::models::{ContractState, LatestBlockchainConfig};
+use nekoton_core::transport::{Connection, Transport};
 use parking_lot::RwLock;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 use crate::options::BlockchainOptions;
 use crate::rpc::rpc_connection::RpcConnection;
-use crate::{Connection, Transport};
 
 static ROUND_ROBIN_COUNTER: AtomicUsize = AtomicUsize::new(0);
 

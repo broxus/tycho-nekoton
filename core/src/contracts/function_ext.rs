@@ -1,16 +1,15 @@
-use super::execution_context::MessageBuilder;
+use anyhow::{anyhow, Result};
+use everscale_types::abi::{AbiValue, Function, NamedAbiValue};
+use everscale_types::models::{Account, RelaxedMsgInfo};
+use everscale_types::num::Tokens;
+use num_traits::cast::ToPrimitive;
+use tycho_executor::ParsedConfig;
+use tycho_vm::OwnedCellSlice;
+
+use super::blockchain_context::{BlockchainContext, MessageBuilder};
 use super::local_executor;
 use super::utils::get_gen_timings;
 use crate::models::GenTimings;
-use anyhow::{anyhow, Result};
-use everscale_types::abi::{AbiValue, Function, NamedAbiValue};
-use everscale_types::cell::HashBytes;
-use everscale_types::models::{Account, BlockchainConfig, LibDescr, RelaxedMsgInfo};
-use everscale_types::num::Tokens;
-use everscale_types::prelude::Dict;
-use nekoton_utils::time::Clock;
-use num_traits::cast::ToPrimitive;
-use tycho_vm::{BehaviourModifiers, OwnedCellSlice};
 
 pub trait FunctionExt {
     #[allow(clippy::too_many_arguments)]
@@ -18,11 +17,8 @@ pub trait FunctionExt {
         &self,
         account: &mut Account,
         input: &[NamedAbiValue],
-        clock: &dyn Clock,
         responsible: bool,
-        rand_seed: HashBytes,
-        libraries: Dict<HashBytes, LibDescr>,
-        config: BlockchainConfig,
+        context: &BlockchainContext,
     ) -> Result<ExecutionOutput>;
 }
 
@@ -31,11 +27,8 @@ impl FunctionExt for Function {
         &self,
         account: &mut Account,
         input: &[NamedAbiValue],
-        clock: &dyn Clock,
         responsible: bool,
-        rand_seed: HashBytes,
-        libraries: Dict<HashBytes, LibDescr>,
-        config: BlockchainConfig,
+        context: &BlockchainContext,
     ) -> Result<ExecutionOutput> {
         let answer_id = if responsible {
             account.balance.tokens = Tokens::new(100_000_000_000_000u128); // 100 000 native tokens
@@ -67,23 +60,21 @@ impl FunctionExt for Function {
                 .build()
         };
 
-        let GenTimings { gen_utime, gen_lt } = get_gen_timings(clock, account.last_trans_lt);
+        let GenTimings { gen_utime, .. } = get_gen_timings(context.clock(), account.last_trans_lt);
+
+        let parsed_config = ParsedConfig::parse(context.config(), gen_utime)?;
 
         let compute_phase_result = local_executor::execute_message(
-            gen_utime,
-            gen_lt,
-            account.clone(),
-            message,
-            config,
-            rand_seed,
-            libraries,
-            BehaviourModifiers::default(),
+            &account,
+            &message,
+            context.executor_params().as_ref(),
+            &parsed_config,
         )?;
 
         if !compute_phase_result.success {
             return Ok(ExecutionOutput {
                 values: vec![],
-                exit_code: compute_phase_result.exit_code,
+                exit_code: !compute_phase_result.exit_code,
             });
         }
 

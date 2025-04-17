@@ -39,11 +39,11 @@ proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["visit", "parsing"] }
 
-tycho-executor = { git = "https://github.com/broxus/tycho-vm.git" }
+tycho-executor = { git = "https://github.com/broxus/tycho-vm.git"}
 tycho-vm = { git = "https://github.com/broxus/tycho-vm.git" }
 
-ton-lite-client = { git = "https://github.com/broxus/tycho-l2.git" }
-proof-api-util = {git = "https://github.com/broxus/tycho-l2.git"}
+#ton-lite-client = { git = "https://github.com/broxus/tycho-l2.git"}
+#proof-api-util = {git = "https://github.com/broxus/tycho-l2.git"}
 
 # local deps
 nekoton-core = { path = "./core" }

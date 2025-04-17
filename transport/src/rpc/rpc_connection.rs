@@ -5,12 +5,12 @@ use anyhow::Result;
 use everscale_types::cell::HashBytes;
 use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
 use nekoton_core::models::{ContractState, LatestBlockchainConfig};
+use nekoton_core::transport::Connection;
+use nekoton_utils::time::Timings;
 use parking_lot::Mutex;
 use reqwest::Url;
 
-use crate::models::Timings;
 use crate::rpc::jrpc_client;
-use crate::Connection;
 
 #[derive(Clone)]
 pub struct RpcConnection {

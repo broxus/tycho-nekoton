@@ -3,6 +3,7 @@ use everscale_types::cell::HashBytes;
 use everscale_types::models::{MsgType, OwnedMessage, Transaction};
 use everscale_types::prelude::Load;
 use futures_util::{Future, Stream};
+use nekoton_core::transport::Transport;
 use pin_project::pin_project;
 use std::collections::VecDeque;
 use std::pin::Pin;
@@ -10,8 +11,6 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::time::Duration;
 use tokio::sync::Mutex;
-
-use crate::Transport;
 
 #[pin_project]
 pub struct TraceTransaction {
@@ -21,12 +20,12 @@ pub struct TraceTransaction {
 }
 
 impl TraceTransaction {
-    pub fn new(transaction_hash: &HashBytes, transport: Arc<dyn Transport>) -> Self {
+    pub fn new(root_hash: &HashBytes, transport: Arc<dyn Transport>) -> Self {
         Self {
             inner: Arc::new(Mutex::new(TraceTransactionState {
                 transport,
                 yield_root: false,
-                root_hash: Some(*transaction_hash),
+                root_hash: Some(*root_hash),
                 //root: None,
                 queue: Default::default(),
             })),
@@ -142,7 +141,7 @@ impl Stream for TraceTransaction {
 #[cfg(test)]
 pub mod tests {
     use crate::rpc::RpcTransport;
-    use crate::traced_transaction::TraceTransaction;
+    use crate::tracing::TraceTransaction;
     use everscale_types::cell::HashBytes;
     use futures_util::StreamExt;
     use reqwest::Url;
@@ -161,7 +160,7 @@ pub mod tests {
 
         let mut traced_tx = TraceTransaction::new(&hash, Arc::new(rpc_transport));
         let mut counter = 0;
-        while let Some(tx) = traced_tx.next().await {
+        while let Some(_) = traced_tx.next().await {
             counter += 1;
         }
         assert_eq!(counter, 12);

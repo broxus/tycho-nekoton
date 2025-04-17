@@ -3,7 +3,7 @@ use everscale_types::cell::HashBytes;
 use everscale_types::models::{Account, AccountState, BlockchainConfig, LibDescr};
 use everscale_types::prelude::Dict;
 use tycho_vm::{
-    BehaviourModifiers, GasParams, OwnedCellSlice, RcStackValue, SmcInfoBase, UnpackedConfig,
+    BehaviourModifiers, GasParams, RcStackValue, SmcInfoBase, SmcInfoTonV6, UnpackedConfig,
     VmStateBuilder,
 };
 
@@ -37,18 +37,9 @@ impl LocalVmBuilder {
         self
     }
 
-    pub fn with_unpacked_config(mut self, config: BlockchainConfig) -> Result<Self> {
-        self.unpacked_config = Some(UnpackedConfig {
-            latest_storage_prices: config
-                .get_raw_cell(18)?
-                .map(|x| OwnedCellSlice::new_allow_exotic(x).into()),
-            global_id: config.get_raw_cell(19)?,
-            mc_gas_prices: config.get_raw_cell(20)?,
-            gas_prices: config.get_raw_cell(21)?,
-            mc_fwd_prices: config.get_raw_cell(24)?,
-            fwd_prices: config.get_raw_cell(25)?,
-            size_limits_config: config.get_raw_cell(43)?,
-        });
+    pub fn with_unpacked_config(mut self, config: BlockchainConfig, now: u32) -> Result<Self> {
+        let partial_config = SmcInfoTonV6::unpack_config_partial(&config, now)?;
+        self.unpacked_config = Some(partial_config);
         Ok(self)
     }
 
