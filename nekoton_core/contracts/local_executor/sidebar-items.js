@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["execute_message"],"struct":["ComputePhaseResult"]};
+window.SIDEBAR_ITEMS = {"fn":["execute_message","execute_ordinary_transaction"],"struct":["ComputePhaseResult"]};

@@ -11,9 +11,9 @@
 <a href=#11 id=11 data-nosnippet>11</a><span class="kw">pub fn </span>get_gen_timings(clock: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Clock, last_transaction_tl: u64) -&gt; GenTimings {
 <a href=#12 id=12 data-nosnippet>12</a>    <span class="kw">let </span>(gen_utime, gen_lt) = {
 <a href=#13 id=13 data-nosnippet>13</a>        <span class="kw">pub const </span>UNKNOWN_TRANSACTION_LT_OFFSET: u64 = <span class="number">10</span>;
-<a href=#14 id=14 data-nosnippet>14</a>        <span class="kw">let </span>now_ms = clock.now_ms_u64();
+<a href=#14 id=14 data-nosnippet>14</a>        <span class="kw">let </span>now_ms = clock.now_sec_u64();
 <a href=#15 id=15 data-nosnippet>15</a>        (
-<a href=#16 id=16 data-nosnippet>16</a>            (now_ms / <span class="number">1000</span>) <span class="kw">as </span>u32,
+<a href=#16 id=16 data-nosnippet>16</a>            now_ms <span class="kw">as </span>u32,
 <a href=#17 id=17 data-nosnippet>17</a>            last_transaction_tl + UNKNOWN_TRANSACTION_LT_OFFSET,
 <a href=#18 id=18 data-nosnippet>18</a>        )
 <a href=#19 id=19 data-nosnippet>19</a>    };

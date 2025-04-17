@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["now_ms_f64","now_ms_u64","now_sec_u64"],"struct":["ClockWithOffset","ConstClock","SimpleClock"],"trait":["Clock"]};
+window.SIDEBAR_ITEMS = {"fn":["now_ms_f64","now_ms_u64","now_sec_u64"],"struct":["ClockWithOffset","ConstClock","SimpleClock","Timings"],"trait":["Clock"]};
