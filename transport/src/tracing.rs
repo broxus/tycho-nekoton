@@ -12,14 +12,17 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 use tokio::sync::Mutex;
 
+type NextTransactionFut = Option<Pin<Box<dyn Future<Output = Result<Option<Transaction>>> + Send>>>;
+
 #[pin_project]
 pub struct TraceTransaction {
     inner: Arc<Mutex<TraceTransactionState>>,
     #[pin]
-    future: Option<Pin<Box<dyn Future<Output = Result<Option<Transaction>>> + Send>>>,
+    future: NextTransactionFut,
 }
 
 impl TraceTransaction {
+    #[allow(unused)]
     pub fn new(root_hash: &HashBytes, transport: Arc<dyn Transport>) -> Self {
         Self {
             inner: Arc::new(Mutex::new(TraceTransactionState {
@@ -160,7 +163,7 @@ pub mod tests {
 
         let mut traced_tx = TraceTransaction::new(&hash, Arc::new(rpc_transport));
         let mut counter = 0;
-        while let Some(_) = traced_tx.next().await {
+        while traced_tx.next().await.is_some() {
             counter += 1;
         }
         assert_eq!(counter, 12);

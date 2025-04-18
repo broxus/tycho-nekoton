@@ -14,7 +14,7 @@ use tycho_executor::ExecutorParams;
 use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
 
 use crate::models::{ContractState, GenTimings};
-use crate::transport::Transport;
+use crate::transport::{SimpleTransport, Transport};
 
 use super::function_ext::{ExecutionOutput, FunctionExt};
 use super::local_vm::{LocalVmBuilder, VmGetterOutput};
@@ -58,8 +58,12 @@ impl BlockchainContext {
         self.desc.config.clone()
     }
 
-    pub fn executor_params(&self) -> Arc<ExecutorParams> {
-        self.desc.executor_params.clone()
+    pub fn executor_params(&self) -> &ExecutorParams {
+        &self.desc.executor_params
+    }
+
+    pub fn executor_params_mut(&mut self) -> &mut ExecutorParams {
+        &mut self.desc.executor_params
     }
 }
 
@@ -71,7 +75,7 @@ pub struct BlockchainAccount {
 #[derive(Clone)]
 pub struct BlockchainDesc {
     pub config: BlockchainConfig,
-    pub executor_params: Arc<ExecutorParams>,
+    pub executor_params: ExecutorParams,
 }
 
 impl BlockchainAccount {
@@ -80,7 +84,7 @@ impl BlockchainAccount {
         function: &Function,
         values: &[NamedAbiValue],
     ) -> Result<ExecutionOutput> {
-        function.run_local(&mut self.account, values, false, &self.context)
+        function.run_local(&mut self.account, values, false, &mut self.context)
     }
 
     pub fn run_local_responsible(
@@ -88,7 +92,7 @@ impl BlockchainAccount {
         function: &Function,
         values: &[NamedAbiValue],
     ) -> Result<ExecutionOutput> {
-        function.run_local(&mut self.account, values, true, &self.context)
+        function.run_local(&mut self.account, values, true, &mut self.context)
     }
 
     pub async fn execute_message(&self, message: &OwnedMessage) -> Result<Transaction> {
@@ -133,7 +137,7 @@ pub struct BlockchainContextBuilder {
     pub config: Option<BlockchainConfig>,
 }
 
-impl<'a> BlockchainContextBuilder {
+impl BlockchainContextBuilder {
     pub fn new() -> BlockchainContextBuilder {
         Self {
             clock: Arc::new(SimpleClock),
@@ -164,14 +168,26 @@ impl<'a> BlockchainContextBuilder {
     }
 
     pub fn build(self) -> Result<BlockchainContext> {
+        let Some(config) = self.config else {
+            anyhow::bail!("Blockchain config is missing");
+        };
+
         Ok(BlockchainContext {
             desc: BlockchainDesc {
-                config: self.config.unwrap(),
-                executor_params: Arc::new(self.executor_params),
+                config: config.clone(),
+                executor_params: self.executor_params,
             },
-            transport: self.transport.unwrap(),
+            transport: self
+                .transport
+                .unwrap_or(Arc::new(SimpleTransport::new([], config)?)),
             clock: self.clock,
         })
+    }
+}
+
+impl Default for BlockchainContextBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

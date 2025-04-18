@@ -12,13 +12,12 @@ use super::utils::get_gen_timings;
 use crate::models::GenTimings;
 
 pub trait FunctionExt {
-    #[allow(clippy::too_many_arguments)]
     fn run_local(
         &self,
         account: &mut Account,
         input: &[NamedAbiValue],
         responsible: bool,
-        context: &BlockchainContext,
+        context: &mut BlockchainContext,
     ) -> Result<ExecutionOutput>;
 }
 
@@ -28,7 +27,7 @@ impl FunctionExt for Function {
         account: &mut Account,
         input: &[NamedAbiValue],
         responsible: bool,
-        context: &BlockchainContext,
+        context: &mut BlockchainContext,
     ) -> Result<ExecutionOutput> {
         let answer_id = if responsible {
             account.balance.tokens = Tokens::new(100_000_000_000_000u128); // 100 000 native tokens
@@ -60,16 +59,17 @@ impl FunctionExt for Function {
                 .build()
         };
 
-        let GenTimings { gen_utime, .. } = get_gen_timings(context.clock(), account.last_trans_lt);
+        let GenTimings { gen_utime, gen_lt } =
+            get_gen_timings(context.clock(), account.last_trans_lt);
 
         let parsed_config = ParsedConfig::parse(context.config(), gen_utime)?;
 
-        let compute_phase_result = local_executor::execute_message(
-            &account,
-            &message,
-            context.executor_params().as_ref(),
-            &parsed_config,
-        )?;
+        let params = context.executor_params_mut();
+        params.block_unixtime = gen_utime;
+        params.block_lt = gen_lt;
+
+        let compute_phase_result =
+            local_executor::execute_message(account, &message, params, &parsed_config)?;
 
         if !compute_phase_result.success {
             return Ok(ExecutionOutput {
@@ -125,7 +125,7 @@ impl FunctionExt for Function {
 
         Ok(ExecutionOutput {
             values: output,
-            exit_code: compute_phase_result.exit_code,
+            exit_code: !compute_phase_result.exit_code,
         })
     }
 }

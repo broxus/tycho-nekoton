@@ -27,7 +27,7 @@ pub fn execute_message(
     message.store_into(&mut builder, Cell::empty_context())?;
     let in_msg_cell = builder.build()?;
 
-    let executor = tycho_executor::Executor::new(&executor_params, config);
+    let executor = tycho_executor::Executor::new(executor_params, config);
 
     let IntAddr::Std(std_addr) = &account.address else {
         anyhow::bail!("Invalid address type");
@@ -74,10 +74,7 @@ pub fn execute_ordinary_transaction(
     executor_params: &ExecutorParams,
     config: &ParsedConfig,
 ) -> Result<Transaction> {
-    let is_external = match message.ty() {
-        MsgType::Int => false,
-        _ => true,
-    };
+    let is_external = !matches!(message.ty(), MsgType::Int);
 
     let optional = shard_account.load_account()?;
     let Some(account) = optional else {
@@ -85,7 +82,7 @@ pub fn execute_ordinary_transaction(
     };
     let address = account.address.as_std().unwrap();
 
-    let executor = tycho_executor::Executor::new(&executor_params, config);
+    let executor = tycho_executor::Executor::new(executor_params, config);
     let uncommited = executor.begin_ordinary(address, is_external, message, shard_account)?;
     let tx = uncommited.build_uncommited()?;
     Ok(tx)

@@ -98,25 +98,25 @@ impl RpcConnection {
         *self.stats.lock() = stats;
     }
 
-    fn update_is_available(&self, is_available: bool) {
-        self.is_available.store(is_available, Ordering::Release);
-    }
+    // fn update_is_available(&self, is_available: bool) {
+    //     self.is_available.store(is_available, Ordering::Release);
+    // }
 }
 
-pub enum LiveCheckResult {
-    /// GetTimings request was successful
-    Live(Timings),
-    Dead,
-}
-
-impl LiveCheckResult {
-    fn as_bool(&self) -> bool {
-        match self {
-            LiveCheckResult::Live(metrics) => metrics.is_reliable(),
-            LiveCheckResult::Dead => false,
-        }
-    }
-}
+// pub enum LiveCheckResult {
+//     /// GetTimings request was successful
+//     Live(Timings),
+//     Dead,
+// }
+//
+// impl LiveCheckResult {
+//     fn as_bool(&self) -> bool {
+//         match self {
+//             LiveCheckResult::Live(metrics) => metrics.is_reliable(),
+//             LiveCheckResult::Dead => false,
+//         }
+//     }
+// }
 
 impl Eq for RpcConnection {}
 
