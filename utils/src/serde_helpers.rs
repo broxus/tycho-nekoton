@@ -125,7 +125,7 @@ pub mod serde_bytes {
     {
         struct HexVisitor;
 
-        impl<'de> Visitor<'de> for HexVisitor {
+        impl Visitor<'_> for HexVisitor {
             type Value = Vec<u8>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -152,7 +152,7 @@ pub mod serde_bytes {
 
 struct BytesVisitor;
 
-impl<'de> Visitor<'de> for BytesVisitor {
+impl Visitor<'_> for BytesVisitor {
     type Value = Vec<u8>;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

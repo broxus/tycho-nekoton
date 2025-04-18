@@ -1,5 +1,4 @@
-use anyhow::{anyhow, Result};
-use everscale_types::abi::{AbiValue, Function, NamedAbiValue};
+use everscale_types::abi::{AbiType, AbiValue, Function, NamedAbiValue};
 use everscale_types::models::{Account, RelaxedMsgInfo};
 use everscale_types::num::Tokens;
 use num_traits::cast::ToPrimitive;
@@ -9,6 +8,7 @@ use tycho_vm::OwnedCellSlice;
 use super::blockchain_context::{BlockchainContext, MessageBuilder};
 use super::local_executor;
 use super::utils::get_gen_timings;
+use crate::error::ExecutionError;
 use crate::models::GenTimings;
 
 pub trait FunctionExt {
@@ -18,7 +18,7 @@ pub trait FunctionExt {
         input: &[NamedAbiValue],
         responsible: bool,
         context: &mut BlockchainContext,
-    ) -> Result<ExecutionOutput>;
+    ) -> Result<ExecutionOutput, ExecutionError>;
 }
 
 impl FunctionExt for Function {
@@ -28,18 +28,22 @@ impl FunctionExt for Function {
         input: &[NamedAbiValue],
         responsible: bool,
         context: &mut BlockchainContext,
-    ) -> Result<ExecutionOutput> {
+    ) -> Result<ExecutionOutput, ExecutionError> {
         let answer_id = if responsible {
             account.balance.tokens = Tokens::new(100_000_000_000_000u128); // 100 000 native tokens
 
             match input.first().map(|token| &token.value) {
                 Some(AbiValue::Uint(32, number)) => {
-                    let answer_id = number
-                        .to_u32()
-                        .ok_or_else(|| anyhow!("Invalid contracts value"))?;
+                    let answer_id =
+                        number
+                            .to_u32()
+                            .ok_or_else(|| ExecutionError::UnexpectedAbiType {
+                                expected: AbiType::Int(32),
+                                actual: number.to_string(),
+                            })?;
                     Some(answer_id)
                 }
-                _ => anyhow::bail!("Invalid contracts"),
+                _ => return Err(ExecutionError::InvalidContractStructure),
             }
         } else {
             None

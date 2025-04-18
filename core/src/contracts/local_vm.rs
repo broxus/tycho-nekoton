@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use everscale_types::cell::HashBytes;
 use everscale_types::models::{Account, AccountState, BlockchainConfig, LibDescr};
 use everscale_types::prelude::Dict;
@@ -6,6 +6,8 @@ use tycho_vm::{
     BehaviourModifiers, GasParams, RcStackValue, SmcInfoBase, SmcInfoTonV6, UnpackedConfig,
     VmStateBuilder,
 };
+
+use crate::error::ExecutionError;
 
 pub struct LocalVmBuilder {
     libraries: Dict<HashBytes, LibDescr>,
@@ -68,12 +70,15 @@ impl LocalVm {
         block_lt: u64,
         account: &Account,
         stack: Vec<RcStackValue>,
-    ) -> Result<VmGetterOutput> {
+    ) -> Result<VmGetterOutput, ExecutionError> {
         let state = match &account.state {
             AccountState::Active(state_init) => state_init,
-            _ => anyhow::bail!("account is not active"),
+            _ => return Err(ExecutionError::AccountNotActive(account.address.clone())),
         };
-        let code = state.clone().code.ok_or(anyhow!("account has no code"))?;
+        let code = state
+            .clone()
+            .code
+            .ok_or(ExecutionError::AccountHasNoCode(account.address.clone()))?;
 
         let smc = SmcInfoBase::new()
             .with_account_addr(account.address.clone())

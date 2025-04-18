@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use anyhow::Result;
+use crate::error::ExecutionError;
+use crate::models::{ContractState, GenTimings};
+use crate::transport::{SimpleTransport, Transport};
 use everscale_types::abi::{Function, NamedAbiValue};
 use everscale_types::crc::crc_16;
 use everscale_types::models::{
@@ -12,9 +14,6 @@ use nekoton_utils::time::{Clock, SimpleClock};
 use num_bigint::BigInt;
 use tycho_executor::ExecutorParams;
 use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
-
-use crate::models::{ContractState, GenTimings};
-use crate::transport::{SimpleTransport, Transport};
 
 use super::function_ext::{ExecutionOutput, FunctionExt};
 use super::local_vm::{LocalVmBuilder, VmGetterOutput};
@@ -28,7 +27,7 @@ pub struct BlockchainContext {
 }
 
 impl BlockchainContext {
-    pub async fn get_account(self, address: &StdAddr) -> Result<BlockchainAccount> {
+    pub async fn get_account(self, address: &StdAddr) -> anyhow::Result<BlockchainAccount> {
         let state = self.transport.get_contract_state(address, None).await?;
         let account = match state {
             ContractState::Exists { account, .. } => account,
@@ -38,11 +37,14 @@ impl BlockchainContext {
 
         Ok(BlockchainAccount {
             context: self,
-            account,
+            account: account.as_ref().clone(),
         })
     }
 
-    pub fn get_account_from_cell(self, account_cell: &DynCell) -> Result<BlockchainAccount> {
+    pub fn get_account_from_cell(
+        self,
+        account_cell: &DynCell,
+    ) -> anyhow::Result<BlockchainAccount> {
         let account = account_cell.parse::<Account>()?;
         Ok(BlockchainAccount {
             context: self,
@@ -83,7 +85,7 @@ impl BlockchainAccount {
         &mut self,
         function: &Function,
         values: &[NamedAbiValue],
-    ) -> Result<ExecutionOutput> {
+    ) -> Result<ExecutionOutput, ExecutionError> {
         function.run_local(&mut self.account, values, false, &mut self.context)
     }
 
@@ -91,22 +93,37 @@ impl BlockchainAccount {
         &mut self,
         function: &Function,
         values: &[NamedAbiValue],
-    ) -> Result<ExecutionOutput> {
+    ) -> Result<ExecutionOutput, ExecutionError> {
         function.run_local(&mut self.account, values, true, &mut self.context)
     }
 
-    pub async fn execute_message(&self, message: &OwnedMessage) -> Result<Transaction> {
-        self.context.transport.send_message_reliable(message).await
+    pub async fn execute_message(
+        &self,
+        message: &OwnedMessage,
+    ) -> Result<Transaction, ExecutionError> {
+        self.context
+            .transport
+            .send_message_reliable(message)
+            .await
+            .map_err(Into::into)
     }
 
-    pub fn run_getter<M>(&self, method_id: &M, args: &[RcStackValue]) -> Result<VmGetterOutput>
+    pub fn run_getter<M>(
+        &self,
+        method_id: &M,
+        args: &[RcStackValue],
+    ) -> Result<VmGetterOutput, ExecutionError>
     where
         M: AsGetterMethodId + ?Sized,
     {
         self.run_getter_ext(method_id, args)
     }
 
-    fn run_getter_ext<M>(&self, method_id: &M, args: &[RcStackValue]) -> Result<VmGetterOutput>
+    fn run_getter_ext<M>(
+        &self,
+        method_id: &M,
+        args: &[RcStackValue],
+    ) -> Result<VmGetterOutput, ExecutionError>
     where
         M: AsGetterMethodId + ?Sized,
     {
@@ -167,7 +184,7 @@ impl BlockchainContextBuilder {
         self
     }
 
-    pub fn build(self) -> Result<BlockchainContext> {
+    pub fn build(self) -> anyhow::Result<BlockchainContext> {
         let Some(config) = self.config else {
             anyhow::bail!("Blockchain config is missing");
         };
@@ -220,7 +237,7 @@ impl MessageBuilder {
         }
     }
 
-    pub fn with_body<T: IntoMessageBody>(mut self, body: T) -> Result<Self> {
+    pub fn with_body<T: IntoMessageBody>(mut self, body: T) -> anyhow::Result<Self> {
         self.body = body.into_message_body()?;
         Ok(self)
     }
@@ -234,25 +251,25 @@ impl MessageBuilder {
         }
     }
 
-    pub fn build_cell(&self) -> Result<Cell> {
+    pub fn build_cell(&self) -> anyhow::Result<Cell> {
         let cell = CellBuilder::build_from(self.build())?;
         Ok(cell)
     }
 }
 
 pub trait IntoMessageBody {
-    fn into_message_body(self) -> Result<OwnedCellSlice>;
+    fn into_message_body(self) -> anyhow::Result<OwnedCellSlice>;
 }
 
 impl IntoMessageBody for CellBuilder {
-    fn into_message_body(self) -> Result<OwnedCellSlice> {
+    fn into_message_body(self) -> anyhow::Result<OwnedCellSlice> {
         let cell = self.build()?;
         Ok(OwnedCellSlice::new_allow_exotic(cell))
     }
 }
 
 impl IntoMessageBody for Cell {
-    fn into_message_body(self) -> Result<OwnedCellSlice> {
+    fn into_message_body(self) -> anyhow::Result<OwnedCellSlice> {
         Ok(OwnedCellSlice::new_allow_exotic(self))
     }
 }

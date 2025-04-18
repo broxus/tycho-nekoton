@@ -1,4 +1,3 @@
-use anyhow::Result;
 use everscale_types::cell::{Cell, CellBuilder};
 use everscale_types::models::{
     Account, ComputePhase, IntAddr, MsgType, OutAction, OutActionsRevIter, OwnedMessage,
@@ -11,6 +10,8 @@ use tycho_executor::phase::{ComputePhaseContext, TransactionInput};
 use tycho_executor::{ExecutorParams, ParsedConfig};
 use tycho_vm::OwnedCellSlice;
 
+use crate::error::ExecutionError;
+
 pub struct ComputePhaseResult {
     pub exit_code: i32,
     pub success: bool,
@@ -22,7 +23,7 @@ pub fn execute_message(
     message: &OwnedMessage,
     executor_params: &ExecutorParams,
     config: &ParsedConfig,
-) -> Result<ComputePhaseResult> {
+) -> Result<ComputePhaseResult, ExecutionError> {
     let mut builder = CellBuilder::new();
     message.store_into(&mut builder, Cell::empty_context())?;
     let in_msg_cell = builder.build()?;
@@ -30,7 +31,7 @@ pub fn execute_message(
     let executor = tycho_executor::Executor::new(executor_params, config);
 
     let IntAddr::Std(std_addr) = &account.address else {
-        anyhow::bail!("Invalid address type");
+        return Err(ExecutionError::InvalidAddressType);
     };
 
     let mut state = executor.begin(std_addr, Some(account.clone()))?;
@@ -45,7 +46,7 @@ pub fn execute_message(
 
     let executed_compute_phase = match compute_phase_result.compute_phase {
         ComputePhase::Skipped(result) => {
-            anyhow::bail!("Compute phase is skipped.Reason: {:?}", result.reason)
+            return Err(ExecutionError::ComputePhaseSkipped(result.reason))
         }
         ComputePhase::Executed(executed_result) => executed_result,
     };
@@ -73,12 +74,12 @@ pub fn execute_ordinary_transaction(
     message: &OwnedMessage,
     executor_params: &ExecutorParams,
     config: &ParsedConfig,
-) -> Result<Transaction> {
+) -> Result<Transaction, ExecutionError> {
     let is_external = !matches!(message.ty(), MsgType::Int);
 
     let optional = shard_account.load_account()?;
     let Some(account) = optional else {
-        anyhow::bail!("Account does not exist");
+        return Err(ExecutionError::AccountDoesNotExist);
     };
     let address = account.address.as_std().unwrap();
 

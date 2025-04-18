@@ -56,7 +56,7 @@ pub mod tests {
         match account.run_local(&function, values.as_slice()) {
             Ok(output) if output.exit_code == 1 || output.exit_code == 0 => Ok(()),
             Ok(output) => anyhow::bail!("non-zero exit code {}", output.exit_code),
-            Err(e) => Err(e),
+            Err(e) => Err(e.into()),
         }
     }
 
@@ -155,7 +155,7 @@ pub mod tests {
         match account.run_local(function, [].as_slice()) {
             Ok(output) if output.exit_code == 1 || output.exit_code == 0 => Ok(()),
             Ok(output) => anyhow::bail!("non-zero exit code {}", output.exit_code),
-            Err(e) => Err(e),
+            Err(e) => Err(e.into()),
         }
     }
 

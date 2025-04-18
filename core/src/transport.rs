@@ -23,7 +23,6 @@ pub trait Transport: Send + Sync {
         &self,
         message_hash: &HashBytes,
     ) -> anyhow::Result<Option<Transaction>>;
-    //async fn connection(&self) -> &dyn Connection;
 }
 
 #[async_trait::async_trait]
@@ -98,6 +97,7 @@ impl Transport for SimpleTransport {
             &ExecutorParams::default(),
             &config,
         )
+        .map_err(Into::into)
     }
 
     async fn get_contract_state(
@@ -117,7 +117,7 @@ impl Transport for SimpleTransport {
         };
 
         Ok(ContractState::Exists {
-            account: account.clone(),
+            account: Box::new(account),
             timings,
             last_transaction_id: LastTransactionId {
                 lt: shard_account.last_trans_lt,
