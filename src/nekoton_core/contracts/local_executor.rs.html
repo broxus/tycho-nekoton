@@ -27,7 +27,7 @@
 <a href=#27 id=27 data-nosnippet>27</a>    message.store_into(<span class="kw-2">&amp;mut </span>builder, Cell::empty_context())<span class="question-mark">?</span>;
 <a href=#28 id=28 data-nosnippet>28</a>    <span class="kw">let </span>in_msg_cell = builder.build()<span class="question-mark">?</span>;
 <a href=#29 id=29 data-nosnippet>29</a>
-<a href=#30 id=30 data-nosnippet>30</a>    <span class="kw">let </span>executor = tycho_executor::Executor::new(<span class="kw-2">&amp;</span>executor_params, config);
+<a href=#30 id=30 data-nosnippet>30</a>    <span class="kw">let </span>executor = tycho_executor::Executor::new(executor_params, config);
 <a href=#31 id=31 data-nosnippet>31</a>
 <a href=#32 id=32 data-nosnippet>32</a>    <span class="kw">let </span>IntAddr::Std(std_addr) = <span class="kw-2">&amp;</span>account.address <span class="kw">else </span>{
 <a href=#33 id=33 data-nosnippet>33</a>        <span class="macro">anyhow::bail!</span>(<span class="string">"Invalid address type"</span>);
@@ -74,19 +74,16 @@
 <a href=#74 id=74 data-nosnippet>74</a>    executor_params: <span class="kw-2">&amp;</span>ExecutorParams,
 <a href=#75 id=75 data-nosnippet>75</a>    config: <span class="kw-2">&amp;</span>ParsedConfig,
 <a href=#76 id=76 data-nosnippet>76</a>) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction&gt; {
-<a href=#77 id=77 data-nosnippet>77</a>    <span class="kw">let </span>is_external = <span class="kw">match </span>message.ty() {
-<a href=#78 id=78 data-nosnippet>78</a>        MsgType::Int =&gt; <span class="bool-val">false</span>,
-<a href=#79 id=79 data-nosnippet>79</a>        <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
-<a href=#80 id=80 data-nosnippet>80</a>    };
-<a href=#81 id=81 data-nosnippet>81</a>
-<a href=#82 id=82 data-nosnippet>82</a>    <span class="kw">let </span>optional = shard_account.load_account()<span class="question-mark">?</span>;
-<a href=#83 id=83 data-nosnippet>83</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(account) = optional <span class="kw">else </span>{
-<a href=#84 id=84 data-nosnippet>84</a>        <span class="macro">anyhow::bail!</span>(<span class="string">"Account does not exist"</span>);
-<a href=#85 id=85 data-nosnippet>85</a>    };
-<a href=#86 id=86 data-nosnippet>86</a>    <span class="kw">let </span>address = account.address.as_std().unwrap();
-<a href=#87 id=87 data-nosnippet>87</a>
-<a href=#88 id=88 data-nosnippet>88</a>    <span class="kw">let </span>executor = tycho_executor::Executor::new(<span class="kw-2">&amp;</span>executor_params, config);
-<a href=#89 id=89 data-nosnippet>89</a>    <span class="kw">let </span>uncommited = executor.begin_ordinary(address, is_external, message, shard_account)<span class="question-mark">?</span>;
-<a href=#90 id=90 data-nosnippet>90</a>    <span class="kw">let </span>tx = uncommited.build_uncommited()<span class="question-mark">?</span>;
-<a href=#91 id=91 data-nosnippet>91</a>    <span class="prelude-val">Ok</span>(tx)
-<a href=#92 id=92 data-nosnippet>92</a>}</code></pre></div></section></main></body></html>
+<a href=#77 id=77 data-nosnippet>77</a>    <span class="kw">let </span>is_external = !<span class="macro">matches!</span>(message.ty(), MsgType::Int);
+<a href=#78 id=78 data-nosnippet>78</a>
+<a href=#79 id=79 data-nosnippet>79</a>    <span class="kw">let </span>optional = shard_account.load_account()<span class="question-mark">?</span>;
+<a href=#80 id=80 data-nosnippet>80</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(account) = optional <span class="kw">else </span>{
+<a href=#81 id=81 data-nosnippet>81</a>        <span class="macro">anyhow::bail!</span>(<span class="string">"Account does not exist"</span>);
+<a href=#82 id=82 data-nosnippet>82</a>    };
+<a href=#83 id=83 data-nosnippet>83</a>    <span class="kw">let </span>address = account.address.as_std().unwrap();
+<a href=#84 id=84 data-nosnippet>84</a>
+<a href=#85 id=85 data-nosnippet>85</a>    <span class="kw">let </span>executor = tycho_executor::Executor::new(executor_params, config);
+<a href=#86 id=86 data-nosnippet>86</a>    <span class="kw">let </span>uncommited = executor.begin_ordinary(address, is_external, message, shard_account)<span class="question-mark">?</span>;
+<a href=#87 id=87 data-nosnippet>87</a>    <span class="kw">let </span>tx = uncommited.build_uncommited()<span class="question-mark">?</span>;
+<a href=#88 id=88 data-nosnippet>88</a>    <span class="prelude-val">Ok</span>(tx)
+<a href=#89 id=89 data-nosnippet>89</a>}</code></pre></div></section></main></body></html>
