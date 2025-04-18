@@ -1,3 +1,3 @@
-var srcIndex = new Map(JSON.parse('[["nekoton_core",["",[["contracts",[],["blockchain_context.rs","function_ext.rs","local_executor.rs","local_vm.rs","mod.rs","utils.rs"]]],["lib.rs","models.rs","transport.rs"]]],["nekoton_proc",["",[],["generator.rs","lib.rs","properties.rs"]]],["nekoton_transport",["",[["rpc",[],["jrpc_client.rs","mod.rs","rpc_connection.rs","rpc_transport.rs"]]],["lib.rs","options.rs","tracing.rs","utils.rs"]]],["nekoton_utils",["",[],["lib.rs","serde_helpers.rs","time.rs","traits.rs"]]]]'));
+var srcIndex = new Map(JSON.parse('[["nekoton_core",["",[["contracts",[],["blockchain_context.rs","function_ext.rs","local_executor.rs","local_vm.rs","mod.rs","utils.rs"]]],["error.rs","lib.rs","models.rs","transport.rs"]]],["nekoton_proc",["",[],["generator.rs","lib.rs","properties.rs"]]],["nekoton_transport",["",[["rpc",[],["jrpc_client.rs","mod.rs","rpc_connection.rs","rpc_transport.rs"]]],["lib.rs","options.rs","tracing.rs","utils.rs"]]],["nekoton_utils",["",[],["lib.rs","serde_helpers.rs","time.rs","traits.rs"]]]]'));
 createSrcSidebar();
-//{"start":36,"fragment_lengths":[176,67,155,78]}
+//{"start":36,"fragment_lengths":[187,67,155,78]}

@@ -56,7 +56,7 @@
 <a href=#56 id=56 data-nosnippet>56</a>        <span class="kw">match </span>account.run_local(<span class="kw-2">&amp;</span>function, values.as_slice()) {
 <a href=#57 id=57 data-nosnippet>57</a>            <span class="prelude-val">Ok</span>(output) <span class="kw">if </span>output.exit_code == <span class="number">1 </span>|| output.exit_code == <span class="number">0 </span>=&gt; <span class="prelude-val">Ok</span>(()),
 <a href=#58 id=58 data-nosnippet>58</a>            <span class="prelude-val">Ok</span>(output) =&gt; <span class="macro">anyhow::bail!</span>(<span class="string">"non-zero exit code {}"</span>, output.exit_code),
-<a href=#59 id=59 data-nosnippet>59</a>            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e),
+<a href=#59 id=59 data-nosnippet>59</a>            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e.into()),
 <a href=#60 id=60 data-nosnippet>60</a>        }
 <a href=#61 id=61 data-nosnippet>61</a>    }
 <a href=#62 id=62 data-nosnippet>62</a>
@@ -155,7 +155,7 @@
 <a href=#155 id=155 data-nosnippet>155</a>        <span class="kw">match </span>account.run_local(function, [].as_slice()) {
 <a href=#156 id=156 data-nosnippet>156</a>            <span class="prelude-val">Ok</span>(output) <span class="kw">if </span>output.exit_code == <span class="number">1 </span>|| output.exit_code == <span class="number">0 </span>=&gt; <span class="prelude-val">Ok</span>(()),
 <a href=#157 id=157 data-nosnippet>157</a>            <span class="prelude-val">Ok</span>(output) =&gt; <span class="macro">anyhow::bail!</span>(<span class="string">"non-zero exit code {}"</span>, output.exit_code),
-<a href=#158 id=158 data-nosnippet>158</a>            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e),
+<a href=#158 id=158 data-nosnippet>158</a>            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e.into()),
 <a href=#159 id=159 data-nosnippet>159</a>        }
 <a href=#160 id=160 data-nosnippet>160</a>    }
 <a href=#161 id=161 data-nosnippet>161</a>
