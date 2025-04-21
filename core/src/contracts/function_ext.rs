@@ -66,7 +66,7 @@ impl FunctionExt for Function {
         let GenTimings { gen_utime, gen_lt } =
             get_gen_timings(context.clock(), account.last_trans_lt);
 
-        let parsed_config = ParsedConfig::parse(context.config(), gen_utime)?;
+        let parsed_config = ParsedConfig::parse(context.config().clone(), gen_utime)?;
 
         let params = context.executor_params_mut();
         params.block_unixtime = gen_utime;

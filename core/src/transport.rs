@@ -127,7 +127,11 @@ impl Transport for SimpleTransport {
     }
 
     async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
-        todo!()
+        Ok(LatestBlockchainConfig {
+            global_id: 0,
+            seqno: 0,
+            config: self.config.clone(),
+        })
     }
 
     async fn get_transaction(&self, _: &HashBytes) -> anyhow::Result<Option<Transaction>> {

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::error::ExecutionError;
 use crate::models::{ContractState, GenTimings};
-use crate::transport::{SimpleTransport, Transport};
+use crate::transport::Transport;
 use everscale_types::abi::{Function, NamedAbiValue};
 use everscale_types::crc::crc_16;
 use everscale_types::models::{
@@ -56,8 +56,8 @@ impl BlockchainContext {
         self.clock.as_ref()
     }
 
-    pub fn config(&self) -> BlockchainConfig {
-        self.desc.config.clone()
+    pub fn config(&self) -> &BlockchainConfig {
+        &self.desc.config
     }
 
     pub fn executor_params(&self) -> &ExecutorParams {
@@ -186,7 +186,11 @@ impl BlockchainContextBuilder {
 
     pub fn build(self) -> anyhow::Result<BlockchainContext> {
         let Some(config) = self.config else {
-            anyhow::bail!("Blockchain config is missing");
+            anyhow::bail!("Failed to build BlockchainContext. Config is missing");
+        };
+        
+        let Some(transport) = self.transport else {
+            anyhow::bail!("Failed to build BlockchainContext. Transport is missing");
         };
 
         Ok(BlockchainContext {
@@ -194,9 +198,7 @@ impl BlockchainContextBuilder {
                 config: config.clone(),
                 executor_params: self.executor_params,
             },
-            transport: self
-                .transport
-                .unwrap_or(Arc::new(SimpleTransport::new([], config)?)),
+            transport,
             clock: self.clock,
         })
     }
@@ -271,6 +273,12 @@ impl IntoMessageBody for CellBuilder {
 impl IntoMessageBody for Cell {
     fn into_message_body(self) -> anyhow::Result<OwnedCellSlice> {
         Ok(OwnedCellSlice::new_allow_exotic(self))
+    }
+}
+
+impl IntoMessageBody for OwnedCellSlice {
+    fn into_message_body(self) -> anyhow::Result<OwnedCellSlice> {
+        Ok(self)
     }
 }
 
