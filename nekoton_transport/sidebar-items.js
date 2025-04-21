@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["options","rpc"]};
+window.SIDEBAR_ITEMS = {"mod":["options","rpc","tracing"]};
