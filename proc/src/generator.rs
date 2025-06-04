@@ -218,7 +218,7 @@ impl StructGenerator {
         let struct_name = if is_event {
             format!("{}EventInput", name.to_camel())
         } else {
-            format!("{}EventOutput", name.to_camel())
+            format!("{}FunctionInput", name.to_camel())
         };
         let model = self.generate_model(&struct_name, inputs.clone());
 

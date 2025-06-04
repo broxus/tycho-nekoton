@@ -188,7 +188,7 @@ impl BlockchainContextBuilder {
         let Some(config) = self.config else {
             anyhow::bail!("Failed to build BlockchainContext. Config is missing");
         };
-        
+
         let Some(transport) = self.transport else {
             anyhow::bail!("Failed to build BlockchainContext. Transport is missing");
         };

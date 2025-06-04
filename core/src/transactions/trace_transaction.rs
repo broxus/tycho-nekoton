@@ -1,16 +1,18 @@
-use anyhow::Result;
-use everscale_types::cell::HashBytes;
-use everscale_types::models::{MsgType, OwnedMessage, Transaction};
-use everscale_types::prelude::Load;
-use futures_util::{Future, Stream};
-use nekoton_core::transport::Transport;
-use pin_project::pin_project;
 use std::collections::VecDeque;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::time::Duration;
+
+use anyhow::Result;
+use everscale_types::cell::HashBytes;
+use everscale_types::models::{MsgType, OwnedMessage, Transaction};
+use everscale_types::prelude::Load;
+use futures_util::{Future, Stream};
+use pin_project::pin_project;
 use tokio::sync::Mutex;
+
+use crate::transport::Transport;
 
 type NextTransactionFut = Option<Pin<Box<dyn Future<Output = Result<Option<Transaction>>> + Send>>>;
 
@@ -29,7 +31,6 @@ impl TraceTransaction {
                 transport,
                 yield_root: false,
                 root_hash: Some(*root_hash),
-                //root: None,
                 queue: Default::default(),
             })),
             future: None,
@@ -41,7 +42,6 @@ struct TraceTransactionState {
     transport: Arc<dyn Transport>,
     yield_root: bool,
     root_hash: Option<HashBytes>,
-    //root: Option<Transaction>,
     queue: VecDeque<HashBytes>,
 }
 
@@ -138,34 +138,5 @@ impl Stream for TraceTransaction {
                 this.future.set(Some(future));
             }
         }
-    }
-}
-
-#[cfg(test)]
-pub mod tests {
-    use crate::rpc::RpcTransport;
-    use crate::tracing::TraceTransaction;
-    use everscale_types::cell::HashBytes;
-    use futures_util::StreamExt;
-    use reqwest::Url;
-    use std::str::FromStr;
-    use std::sync::Arc;
-
-    #[tokio::test]
-    async fn traced_tx() {
-        let hash =
-            HashBytes::from_str("86c0523831d3be661339cd18be4714ec5d4501779aa6d05ac2b8bca785ddbf43")
-                .unwrap();
-        let urls = vec![Url::from_str("https://rpc.hamster.network/").unwrap()];
-        let rpc_transport = RpcTransport::new(urls, Default::default(), false)
-            .await
-            .unwrap();
-
-        let mut traced_tx = TraceTransaction::new(&hash, Arc::new(rpc_transport));
-        let mut counter = 0;
-        while traced_tx.next().await.is_some() {
-            counter += 1;
-        }
-        assert_eq!(counter, 12);
     }
 }

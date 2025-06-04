@@ -159,6 +159,6 @@ pub mod tests {
         }
     }
 
-    #[nekoton_proc::abi("core/src/contracts/test/abi.json")]
+    #[nekoton_proc::abi("core/src/test/abi.json")]
     pub mod qube {}
 }
