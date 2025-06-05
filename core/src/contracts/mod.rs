@@ -8,15 +8,15 @@ pub mod utils;
 pub mod tests {
     use crate::contracts::blockchain_context::BlockchainContextBuilder;
     use crate::transport::SimpleTransport;
-    use everscale_types::abi::{AbiHeaderType, AbiType, AbiValue, AbiVersion, Function};
-    use everscale_types::boc::Boc;
-    use everscale_types::models::{
-        BlockchainConfig, IntAddr, SizeLimitsConfig, StdAddr, StdAddrFormat,
-    };
-    use everscale_types::prelude::{CellBuilder, Load};
     use num_bigint::BigUint;
     use num_traits::Zero;
     use std::sync::Arc;
+    use tycho_types::abi::{AbiHeaderType, AbiType, AbiValue, AbiVersion, Function};
+    use tycho_types::boc::Boc;
+    use tycho_types::models::{
+        BlockchainConfig, IntAddr, SizeLimitsConfig, StdAddr, StdAddrFormat,
+    };
+    use tycho_types::prelude::{CellBuilder, Load};
     use tycho_vm::{tuple, OwnedCellSlice, SafeRc};
 
     #[test]

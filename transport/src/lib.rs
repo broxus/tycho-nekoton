@@ -4,12 +4,12 @@ pub mod rpc;
 #[cfg(test)]
 pub mod tests {
     use crate::rpc::RpcTransport;
-    use everscale_types::cell::HashBytes;
     use futures_util::StreamExt;
     use nekoton_core::transactions::TraceTransaction;
     use reqwest::Url;
     use std::str::FromStr;
     use std::sync::Arc;
+    use tycho_types::cell::HashBytes;
 
     #[tokio::test]
     async fn traced_tx() {

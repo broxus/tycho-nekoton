@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
-use everscale_types::boc::BocRepr;
-use everscale_types::cell::HashBytes;
-use everscale_types::merkle::MerkleProof;
-use everscale_types::models::{BlockId, OptionalAccount, OwnedMessage, StdAddr, Transaction};
-use everscale_types::prelude::{Boc, Cell, CellFamily, CellSlice, Load};
+use tycho_types::boc::BocRepr;
+use tycho_types::cell::HashBytes;
+use tycho_types::merkle::MerkleProof;
+use tycho_types::models::{BlockId, OptionalAccount, OwnedMessage, StdAddr, Transaction};
+use tycho_types::prelude::{Boc, Cell, CellFamily, CellSlice, Load};
 use nekoton_core::models::GenTimings;
 use nekoton_core::models::{ContractState, LatestBlockchainConfig};
 use nekoton_core::transport::Transport;
@@ -179,7 +179,7 @@ impl Transport for TonLiteTransport {
 }
 
 fn parse_proofs(proofs: Vec<u8>) -> Result<ParsedProofs> {
-    use everscale_types::boc::de::{BocHeader, Options};
+    use tycho_types::boc::de::{BocHeader, Options};
 
     let header = BocHeader::decode(
         &proofs,

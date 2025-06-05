@@ -1,7 +1,7 @@
 use anyhow::Result;
-use everscale_types::cell::HashBytes;
-use everscale_types::models::{Account, AccountState, BlockchainConfig, LibDescr};
-use everscale_types::prelude::Dict;
+use tycho_types::cell::HashBytes;
+use tycho_types::models::{Account, AccountState, BlockchainConfig, LibDescr};
+use tycho_types::prelude::Dict;
 use tycho_vm::{
     BehaviourModifiers, GasParams, RcStackValue, SmcInfoBase, SmcInfoTonV6, UnpackedConfig,
     VmStateBuilder,

@@ -11,7 +11,7 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-everscale-types = { workspace = true }
+tycho-types = { workspace = true }
 futures-util = { workspace = true }
 parking_lot = { workspace = true }
 #proof-api-util = { workspace = true }

@@ -1,12 +1,12 @@
 extern crate proc_macro;
 
-use everscale_types::abi::{AbiHeaderType, Contract};
 use proc_macro::TokenStream;
 use quote::quote;
 use std::fs;
 use std::path::Path;
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_macro_input, ItemMod};
+use tycho_types::abi::{AbiHeaderType, Contract};
 use syn::{LitStr, Result};
 
 use crate::generator::{FunctionDescriptionTokens, StructGenerator};
@@ -87,15 +87,15 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         generated_structs.extend_from_slice(inner_models.as_slice());
     });
 
-    let header_type: syn::Type = syn::parse_str("everscale_types::abi::AbiHeaderType").unwrap();
-    let abi_type: syn::Type = syn::parse_str("everscale_types::abi::AbiVersion").unwrap();
+    let header_type: syn::Type = syn::parse_str("tycho_types::abi::AbiHeaderType").unwrap();
+    let abi_type: syn::Type = syn::parse_str("tycho_types::abi::AbiVersion").unwrap();
 
     let mut header_idents = Vec::<proc_macro2::TokenStream>::new();
     for i in contract.headers.iter() {
         let ty = match i {
-            AbiHeaderType::Expire => "everscale_types::abi::AbiHeaderType::Expire",
-            AbiHeaderType::PublicKey => "everscale_types::abi::AbiHeaderType::PublicKey",
-            AbiHeaderType::Time => "everscale_types::abi::AbiHeaderType::Time",
+            AbiHeaderType::Expire => "tycho_types::abi::AbiHeaderType::Expire",
+            AbiHeaderType::PublicKey => "tycho_types::abi::AbiHeaderType::PublicKey",
+            AbiHeaderType::Time => "tycho_types::abi::AbiHeaderType::Time",
         };
         let ty: syn::Type = syn::parse_str(ty).expect("Failed to parse header type");
         let quote = quote! {
@@ -116,7 +116,7 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
 
         pub mod #mod_name {
             use anyhow::Result;
-            use everscale_types::abi::{NamedAbiType, AbiType, WithAbiType, IntoAbi, IntoPlainAbi,
+            use tycho_types::abi::{NamedAbiType, AbiType, WithAbiType, IntoAbi, IntoPlainAbi,
                 FromAbiIter, FromAbi, AbiValue, NamedAbiValue, Function, Event
             };
             use num_bigint::{BigInt, BigUint};
