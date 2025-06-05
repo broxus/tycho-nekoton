@@ -3,15 +3,15 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use everscale_types::cell::HashBytes;
-use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
-use everscale_types::prelude::CellBuilder;
 use futures_util::StreamExt;
 use nekoton_core::models::{ContractState, LatestBlockchainConfig};
 use nekoton_core::transport::{Connection, Transport};
 use parking_lot::RwLock;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use tycho_types::cell::HashBytes;
+use tycho_types::models::{OwnedMessage, StdAddr, Transaction};
+use tycho_types::prelude::CellBuilder;
 
 use crate::options::BlockchainOptions;
 use crate::rpc::rpc_connection::RpcConnection;

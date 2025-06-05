@@ -2,13 +2,13 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use anyhow::Result;
-use everscale_types::models::*;
-use everscale_types::prelude::*;
 use nekoton_core::models::{ContractState, LatestBlockchainConfig};
 use nekoton_utils::serde_helpers::*;
 use nekoton_utils::time::Timings;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use tycho_types::models::*;
+use tycho_types::prelude::*;
 
 #[derive(Clone)]
 pub struct JrpcClient {

@@ -1,8 +1,8 @@
 use anyhow::Context;
-use everscale_types::cell::{Cell, CellSlice, HashBytes, Load};
-use everscale_types::dict::Dict;
-use everscale_types::error::Error;
-use everscale_types::models::{BlockchainConfig, CurrencyCollection, ShardAccounts, ShardHashes};
+use tycho_types::cell::{Cell, CellSlice, HashBytes, Load};
+use tycho_types::dict::Dict;
+use tycho_types::error::Error;
+use tycho_types::models::{BlockchainConfig, CurrencyCollection, ShardAccounts, ShardHashes};
 use nekoton_core::models::{GenTimings, LastTransactionId};
 
 pub(crate) struct ParsedProofs {

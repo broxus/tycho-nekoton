@@ -1,13 +1,13 @@
-use everscale_types::cell::{Cell, CellBuilder};
-use everscale_types::models::{
+use tycho_types::cell::{Cell, CellBuilder};
+use tycho_types::models::{
     Account, ComputePhase, IntAddr, MsgType, OutAction, OutActionsRevIter, OwnedMessage,
     OwnedRelaxedMessage, ShardAccount, Transaction,
 };
-use everscale_types::prelude::{CellFamily, Store};
+use tycho_types::prelude::{CellFamily, Store};
 
-use everscale_types::num::Tokens;
 use tycho_executor::phase::{ComputePhaseContext, TransactionInput};
 use tycho_executor::{ExecutorParams, ParsedConfig};
+use tycho_types::num::Tokens;
 use tycho_vm::OwnedCellSlice;
 
 use crate::error::ExecutionError;

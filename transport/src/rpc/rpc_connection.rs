@@ -2,13 +2,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use anyhow::Result;
-use everscale_types::cell::HashBytes;
-use everscale_types::models::{OwnedMessage, StdAddr, Transaction};
 use nekoton_core::models::{ContractState, LatestBlockchainConfig};
 use nekoton_core::transport::Connection;
 use nekoton_utils::time::Timings;
 use parking_lot::Mutex;
 use reqwest::Url;
+use tycho_types::cell::HashBytes;
+use tycho_types::models::{OwnedMessage, StdAddr, Transaction};
 
 use crate::rpc::jrpc_client;
 

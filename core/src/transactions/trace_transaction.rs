@@ -5,12 +5,12 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 
 use anyhow::Result;
-use everscale_types::cell::HashBytes;
-use everscale_types::models::{MsgType, OwnedMessage, Transaction};
-use everscale_types::prelude::Load;
 use futures_util::{Future, Stream};
 use pin_project::pin_project;
 use tokio::sync::Mutex;
+use tycho_types::cell::HashBytes;
+use tycho_types::models::{MsgType, OwnedMessage, Transaction};
+use tycho_types::prelude::Load;
 
 use crate::transport::Transport;
 

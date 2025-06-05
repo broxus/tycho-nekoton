@@ -1,7 +1,7 @@
 use crate::models::GenTimings;
-use everscale_types::abi::{AbiValue, NamedAbiValue};
 use nekoton_utils::time::Clock;
 use num_bigint::BigUint;
+use tycho_types::abi::{AbiValue, NamedAbiValue};
 
 const ANSWER_ID: &str = "_answer_id";
 pub fn answer_id() -> NamedAbiValue {

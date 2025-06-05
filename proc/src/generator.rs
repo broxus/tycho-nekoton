@@ -1,7 +1,7 @@
 use case::CaseExt;
-use everscale_types::abi::{AbiType, Event, Function, NamedAbiType, PlainAbiType};
 use quote::{format_ident, quote};
 use std::sync::Arc;
+use tycho_types::abi::{AbiType, Event, Function, NamedAbiType, PlainAbiType};
 
 use crate::properties::StructProperty;
 
@@ -104,11 +104,11 @@ impl StructGenerator {
 
         if is_event {
             quote! {
-                pub fn #function_name_ident() -> &'static everscale_types::abi::Event {
-                    static ONCE: std::sync::OnceLock<everscale_types::abi::Event> = std::sync::OnceLock::new();
+                pub fn #function_name_ident() -> &'static tycho_types::abi::Event {
+                    static ONCE: std::sync::OnceLock<tycho_types::abi::Event> = std::sync::OnceLock::new();
                     ONCE.get_or_init(|| {
                         let inputs: [NamedAbiType; #inputs_count] = #inputs_array;
-                        everscale_types::abi::Event::builder(ABI_VERSION, #name)
+                        tycho_types::abi::Event::builder(ABI_VERSION, #name)
                             .with_inputs(inputs)
                             .build()
                     })
@@ -134,12 +134,12 @@ impl StructGenerator {
             };
 
             quote! {
-                pub fn #function_name_ident() -> &'static everscale_types::abi::Function {
-                    static ONCE: std::sync::OnceLock<everscale_types::abi::Function> = std::sync::OnceLock::new();
+                pub fn #function_name_ident() -> &'static tycho_types::abi::Function {
+                    static ONCE: std::sync::OnceLock<tycho_types::abi::Function> = std::sync::OnceLock::new();
                     ONCE.get_or_init(|| {
                         let inputs: [NamedAbiType; #inputs_count] = #inputs_array;
                         let outputs: [NamedAbiType; #outputs_count] = #outputs_array;
-                        everscale_types::abi::Function::builder(ABI_VERSION, #name)
+                        tycho_types::abi::Function::builder(ABI_VERSION, #name)
                             .with_headers(HEADERS)
                             .with_inputs(inputs)
                             .with_outputs(outputs)
@@ -290,7 +290,7 @@ impl StructGenerator {
                     64 => "u64",
                     128 => "u128",
                     160 => "[u8; 20]",
-                    256 => "everscale_types::prelude::HashBytes",
+                    256 => "tycho_types::prelude::HashBytes",
                     _ => "num_bigint::BigUint",
                 };
                 StructProperty::Simple {
@@ -385,7 +385,7 @@ impl StructGenerator {
             }
             AbiType::Cell => StructProperty::Simple {
                 name,
-                type_name: syn::parse_quote!(everscale_types::prelude::Cell),
+                type_name: syn::parse_quote!(tycho_types::prelude::Cell),
             },
             AbiType::Map(a, b) => {
                 let key = match a {
@@ -407,7 +407,7 @@ impl StructGenerator {
             }
             AbiType::Address => StructProperty::Simple {
                 name,
-                type_name: syn::parse_quote!(everscale_types::models::message::StdAddr),
+                type_name: syn::parse_quote!(tycho_types::models::message::StdAddr),
             },
             AbiType::Bytes | AbiType::FixedBytes(_) => StructProperty::Simple {
                 name,
@@ -419,7 +419,7 @@ impl StructGenerator {
             },
             AbiType::Token => StructProperty::Simple {
                 name,
-                type_name: syn::parse_quote!(everscale_types::num::Tokens),
+                type_name: syn::parse_quote!(tycho_types::num::Tokens),
             },
             AbiType::Optional(a) => {
                 let rust_name = name.clone().map(|x| x.to_snake()).unwrap_or_default();
@@ -439,42 +439,42 @@ impl StructGenerator {
 fn quote_abi_type(ty: &AbiType) -> proc_macro2::TokenStream {
     let quote: proc_macro2::TokenStream = match ty.clone() {
         AbiType::String => {
-            let ty: syn::Type = syn::parse_quote!(everscale_types::abi::AbiType::String);
+            let ty: syn::Type = syn::parse_quote!(tycho_types::abi::AbiType::String);
             quote! {
                 #ty
             }
         }
         AbiType::Address => {
-            let ty: syn::Type = syn::parse_quote!(everscale_types::abi::AbiType::Address);
+            let ty: syn::Type = syn::parse_quote!(tycho_types::abi::AbiType::Address);
             quote! {
                 #ty
             }
         }
-        AbiType::Bool => syn::parse_quote!(everscale_types::abi::AbiType::Bool),
-        AbiType::Bytes => syn::parse_quote!(everscale_types::abi::AbiType::Bytes),
+        AbiType::Bool => syn::parse_quote!(tycho_types::abi::AbiType::Bool),
+        AbiType::Bytes => syn::parse_quote!(tycho_types::abi::AbiType::Bytes),
         AbiType::FixedBytes(size) => {
-            syn::parse_quote!(everscale_types::abi::AbiType::FixedBytes(#size))
+            syn::parse_quote!(tycho_types::abi::AbiType::FixedBytes(#size))
         }
-        AbiType::Cell => syn::parse_quote!(everscale_types::abi::AbiType::Cell),
-        AbiType::Token => syn::parse_quote!(everscale_types::abi::AbiType::Token),
+        AbiType::Cell => syn::parse_quote!(tycho_types::abi::AbiType::Cell),
+        AbiType::Token => syn::parse_quote!(tycho_types::abi::AbiType::Token),
         AbiType::Int(value) => quote! {
-            everscale_types::abi::AbiType::Int(#value)
+            tycho_types::abi::AbiType::Int(#value)
         },
         AbiType::Uint(value) => {
             quote! {
-                everscale_types::abi::AbiType::Uint(#value)
+                tycho_types::abi::AbiType::Uint(#value)
             }
         }
         AbiType::VarInt(value) => {
             let val = value.get();
             quote! {
-                everscale_types::abi::AbiType::Int(core::num::nonzero::NonZeroU8(#val))
+                tycho_types::abi::AbiType::Int(core::num::nonzero::NonZeroU8(#val))
             }
         }
         AbiType::VarUint(value) => {
             let val = value.get();
             quote! {
-                everscale_types::abi:AbiType::Uint(core::num::nonzero::NonZeroU8(#val))
+                tycho_types::abi:AbiType::Uint(core::num::nonzero::NonZeroU8(#val))
             }
         }
         AbiType::Tuple(tuple) => {
@@ -486,62 +486,61 @@ fn quote_abi_type(ty: &AbiType) -> proc_macro2::TokenStream {
             }
 
             quote! {
-                everscale_types::abi::AbiType::Tuple(std::sync::Arc::new([ #(#tuple_properties),*]))
+                tycho_types::abi::AbiType::Tuple(std::sync::Arc::new([ #(#tuple_properties),*]))
             }
         }
         AbiType::Array(ty) => {
             let ty = quote_abi_type(&ty);
             quote! {
-                everscale_types::abi::AbiType::Array(std::sync::Arc::new(#ty))
+                tycho_types::abi::AbiType::Array(std::sync::Arc::new(#ty))
             }
         }
         AbiType::FixedArray(ty, size) => {
             let ty = quote_abi_type(&ty);
             quote! {
-                everscale_types::abi:AbiType::FixedArray(std::sync::Arc<#ty>, #size)
+                tycho_types::abi:AbiType::FixedArray(std::sync::Arc<#ty>, #size)
             }
         }
         AbiType::Map(key, value) => {
             let key_type: proc_macro2::TokenStream = match key {
                 PlainAbiType::Address => {
-                    let ty: syn::Type =
-                        syn::parse_quote!(everscale_types::abi::PlainAbiType::Address);
+                    let ty: syn::Type = syn::parse_quote!(tycho_types::abi::PlainAbiType::Address);
                     quote! {
                         #ty
                     }
                 }
                 PlainAbiType::Bool => {
-                    let ty: syn::Type = syn::parse_quote!(everscale_types::abi::PlainAbiType::Bool);
+                    let ty: syn::Type = syn::parse_quote!(tycho_types::abi::PlainAbiType::Bool);
                     quote! {
                         #ty
                     }
                 }
                 PlainAbiType::Uint(value) => {
                     quote! {
-                        everscale_types::abi::PlainAbiType::Uint(#value)
+                        tycho_types::abi::PlainAbiType::Uint(#value)
                     }
                 }
                 PlainAbiType::Int(value) => {
                     quote! {
-                        everscale_types::abi::PlainAbiType::Int(#value)
+                        tycho_types::abi::PlainAbiType::Int(#value)
                     }
                 }
             };
 
             let value_type = quote_abi_type(&value);
-            syn::parse_quote!(everscale_types::abi::AbiType::Map(#key_type, std::sync::Arc::new(#value_type)))
+            syn::parse_quote!(tycho_types::abi::AbiType::Map(#key_type, std::sync::Arc::new(#value_type)))
         }
         AbiType::Optional(ty) => {
             println!("making abi type {ty:?}");
             let ty = quote_abi_type(ty.as_ref());
             quote! {
-                everscale_types::abi::AbiType::Optional(std::sync::Arc<#ty>)
+                tycho_types::abi::AbiType::Optional(std::sync::Arc<#ty>)
             }
         }
         AbiType::Ref(_) => {
             let ty = quote_abi_type(ty);
             quote! {
-                everscale_types::abi::AbiType::Ref(std::sync::Arc<#ty>)
+                tycho_types::abi::AbiType::Ref(std::sync::Arc<#ty>)
             }
         }
     };

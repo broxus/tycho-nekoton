@@ -1,5 +1,5 @@
 [workspace.package]
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 authors = ["Broxus Team"]
 rust-version = "1.80.0"
@@ -19,7 +19,8 @@ members = [
 # crates.io deps
 anyhow = "1.0"
 async-trait = "0.1"
-everscale-types = { git = "https://github.com/broxus/everscale-types.git", features = ["tycho", "abi"] }
+ed25519-dalek = "2.1"
+tycho-types = { version = "0.2", features = ["tycho", "abi"] }
 futures-util = "0.3"
 hex = { version = "0.4" }
 num-bigint = "0.4.6"
@@ -32,15 +33,14 @@ serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0"
 tokio = { version = "1", features = ["sync", "time"] }
-tl-proto = "0.5.3"
 
 case = "1.0.0"
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
 
-tycho-executor = { git = "https://github.com/broxus/tycho-vm.git"}
-tycho-vm = { git = "https://github.com/broxus/tycho-vm.git" }
+tycho-executor = "0.2"
+tycho-vm = "0.2"
 
 # local deps
 nekoton-core = { path = "./core" }
@@ -48,6 +48,6 @@ nekoton-transport = { path = "./transport" }
 nekoton-utils = { path = "./utils" }
 nekoton-proc =  { path = "./proc" }
 
-[patch.crates-io]
-everscale-types = { git = "https://github.com/broxus/everscale-types.git" }
+#[patch.crates-io]
+#everscale-types = { git = "https://github.com/broxus/everscale-types.git" }
 

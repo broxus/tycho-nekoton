@@ -1,5 +1,5 @@
-use everscale_types::abi::AbiType;
-use everscale_types::models::{ComputePhaseSkipReason, IntAddr};
+use tycho_types::abi::AbiType;
+use tycho_types::models::{ComputePhaseSkipReason, IntAddr};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ExecutionError {
@@ -23,7 +23,7 @@ pub enum ExecutionError {
     TransactionError(#[from] tycho_executor::TxError),
 
     #[error("Cell error: {0}")]
-    CellError(#[from] everscale_types::error::Error),
+    CellError(#[from] tycho_types::error::Error),
     #[error("Error: {0}")]
     Other(#[from] anyhow::Error),
 }
