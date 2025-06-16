@@ -89,7 +89,7 @@ impl LocalVm {
             .require_ton_v4()
             .require_ton_v6()
             .with_unpacked_config(self.config.clone().into_tuple())
-            .require_ton_v9();
+            .require_ton_v11();
 
         let data = state.clone().data.unwrap_or_default();
 
