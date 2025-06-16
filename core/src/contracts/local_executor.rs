@@ -85,6 +85,6 @@ pub fn execute_ordinary_transaction(
 
     let executor = tycho_executor::Executor::new(executor_params, config);
     let uncommited = executor.begin_ordinary(address, is_external, message, shard_account)?;
-    let tx = uncommited.build_uncommitted()?;
+    let tx = uncommited.build_uncommited()?;
     Ok(tx)
 }
