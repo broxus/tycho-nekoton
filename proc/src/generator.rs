@@ -8,7 +8,7 @@ use crate::properties::StructProperty;
 pub struct FunctionDescriptionTokens {
     pub body: proc_macro2::TokenStream,
     pub input: proc_macro2::TokenStream,
-    pub output: proc_macro2::TokenStream,
+    pub output: Option<proc_macro2::TokenStream>,
 
     pub inner_models: Vec<proc_macro2::TokenStream>,
 }
@@ -42,7 +42,7 @@ impl StructGenerator {
         FunctionDescriptionTokens {
             body: func,
             input: input_token,
-            output: output_token,
+            output: Some(output_token),
             inner_models: inner_modes,
         }
     }
@@ -63,7 +63,7 @@ impl StructGenerator {
         FunctionDescriptionTokens {
             body: func,
             input: input_token,
-            output: proc_macro2::TokenStream::default(), //event has no output
+            output: None, //event has no output
             inner_models: inner_modes,
         }
     }
@@ -216,9 +216,17 @@ impl StructGenerator {
         is_event: bool,
     ) -> proc_macro2::TokenStream {
         let struct_name = if is_event {
-            format!("{}EventInput", name.to_camel())
+            if name.starts_with("_") {
+                format!("{}EventInputExt", name.to_camel())
+            } else {
+                format!("{}EventInput", name.to_camel())
+            }
         } else {
-            format!("{}FunctionInput", name.to_camel())
+            if name.starts_with("_") {
+                format!("{}FunctionInputExt", name.to_camel())
+            } else {
+                format!("{}FunctionInput", name.to_camel())
+            }
         };
         let model = self.generate_model(&struct_name, inputs.clone());
 
@@ -235,9 +243,13 @@ impl StructGenerator {
         name: &str,
         outputs: Arc<[NamedAbiType]>,
     ) -> proc_macro2::TokenStream {
-        let struct_name = format!("{}FunctionOutput", name.to_camel());
+        let struct_name = if name.starts_with("_") {
+            format!("{}FunctionOutputExt", name.to_camel())
+        } else {
+            format!("{}FunctionOutput", name.to_camel())
+        };
+        
         let model = self.generate_model(&struct_name, outputs.clone());
-
         if !self.generated_structs.contains_key(&struct_name) {
             self.generated_structs
                 .insert(struct_name.clone(), outputs.to_vec());
@@ -301,6 +313,10 @@ impl StructGenerator {
                     type_name: syn::parse_str(ty).unwrap(),
                 }
             }
+            AbiType::VarUint(value) if value.get() == 16 => StructProperty::Simple {
+                name,
+                type_name: syn::parse_quote!(everscale_types::num::Tokens),
+            },
             AbiType::VarUint(_) | AbiType::VarInt(_) => StructProperty::Simple {
                 name,
                 type_name: syn::parse_quote!(num_bigint::BigUint),
@@ -380,7 +396,9 @@ impl StructGenerator {
                     _ => panic!("Map key is not allowed type"),
                 };
 
-                let value = self.make_struct_property(None, b.as_ref());
+                let rust_name = name.clone().map(|x| x.to_snake()).unwrap_or_default();
+                let value_name = format!("{rust_name}_value");
+                let value = self.make_struct_property(Some(value_name), b.as_ref());
 
                 StructProperty::HashMap {
                     name: name.unwrap_or_default(),
@@ -405,7 +423,10 @@ impl StructGenerator {
                 type_name: syn::parse_quote!(everscale_types::num::Tokens),
             },
             AbiType::Optional(a) => {
-                let internal_struct = self.make_struct_property(None, a.as_ref());
+                let rust_name = name.clone().map(|x| x.to_snake()).unwrap_or_default();
+                let rust_name = format!("{rust_name}_value");
+                let internal_struct = self.make_struct_property(Some(rust_name), a.as_ref());
+
                 StructProperty::Option {
                     name: name.unwrap_or_default(),
                     internal: Box::new(internal_struct),
@@ -511,8 +532,9 @@ fn quote_abi_type(ty: &AbiType) -> proc_macro2::TokenStream {
             let value_type = quote_abi_type(&value);
             syn::parse_quote!(everscale_types::abi::AbiType::Map(#key_type, std::sync::Arc::new(#value_type)))
         }
-        AbiType::Optional(_) => {
-            let ty = quote_abi_type(ty);
+        AbiType::Optional(ty) => {
+            println!("making abi type {ty:?}");
+            let ty = quote_abi_type(ty.as_ref());
             quote! {
                 everscale_types::abi::AbiType::Optional(std::sync::Arc<#ty>)
             }

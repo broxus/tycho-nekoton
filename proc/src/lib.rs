@@ -60,7 +60,9 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         generated_functions.push(body);
 
         generated_structs.push(input);
-        generated_structs.push(output);
+        if let Some(output) = output {
+            generated_structs.push(output);
+        }
         generated_structs.extend_from_slice(inner_models.as_slice());
     });
 
@@ -68,14 +70,12 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         let FunctionDescriptionTokens {
             body,
             input,
-            output,
             inner_models,
+            ..
         } = struct_gen.process_event(event);
 
         generated_events.push(body);
-
         generated_structs.push(input);
-        generated_structs.push(output);
         generated_structs.extend_from_slice(inner_models.as_slice());
     });
 
