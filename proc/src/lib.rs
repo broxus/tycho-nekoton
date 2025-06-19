@@ -6,7 +6,7 @@ use quote::quote;
 use std::fs;
 use std::path::Path;
 use syn::parse::{Parse, ParseStream};
-use syn::Result;
+use syn::{LitStr, Result};
 use syn::{parse_macro_input, ItemMod};
 
 use crate::generator::{FunctionDescriptionTokens, StructGenerator};
@@ -15,12 +15,12 @@ mod generator;
 mod properties;
 
 struct ModuleParams {
-    path: String,
+    path: LitStr,
 }
 
 impl Parse for ModuleParams {
     fn parse(input: ParseStream) -> Result<Self> {
-        let path = input.parse::<syn::LitStr>()?.value();
+        let path = input.parse::<LitStr>()?;
         Ok(ModuleParams { path })
     }
 }
@@ -32,17 +32,27 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
     let mut generated_events: Vec<proc_macro2::TokenStream> = Vec::new();
 
     let params = parse_macro_input!(params as ModuleParams);
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+    let path = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+
+    let root = Path::new(&path)
         .parent()
         .expect("project root dir not found");
 
     println!("macro root: {root:?}");
-    let file_path = root.join(params.path);
+    let file_path = root.join(&params.path.value());
     println!("file path: {file_path:?}");
-
-    let content = fs::read_to_string(file_path).unwrap();
-
-    let contract = serde_json::from_str::<Contract>(&content).unwrap();
+    
+    
+    let content = match fs::read_to_string(&file_path) {
+        Ok(content) => content,
+        Err(e) => panic!("Failed to read file by specified path. Error: {e:?}")
+    };
+    
+    let contract = match serde_json::from_str::<Contract>(&content) {
+        Ok(contract) => contract,
+        Err(e) => panic!("Failed to load contract from json. Error: {e:?}"),
+    };
+    
 
     let input = parse_macro_input!(input as ItemMod);
     let mod_name = &input.ident;

@@ -37,7 +37,7 @@ tl-proto = "0.5.3"
 case = "1.0.0"
 proc-macro2 = "1.0"
 quote = "1.0"
-syn = { version = "2.0", features = ["visit", "parsing"] }
+syn = { version = "2.0", features = ["full"] }
 
 tycho-executor = { git = "https://github.com/broxus/tycho-vm.git"}
 tycho-vm = { git = "https://github.com/broxus/tycho-vm.git" }
