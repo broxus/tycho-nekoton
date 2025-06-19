@@ -215,19 +215,18 @@ impl StructGenerator {
         inputs: Arc<[NamedAbiType]>,
         is_event: bool,
     ) -> proc_macro2::TokenStream {
-        let struct_name = if is_event {
-            if name.starts_with("_") {
-                format!("{}EventInputExt", name.to_camel())
-            } else {
-                format!("{}EventInput", name.to_camel())
-            }
+        let f_name = if is_event {
+            format!("{}EventInput", name.to_camel())
         } else {
-            if name.starts_with("_") {
-                format!("{}FunctionInputExt", name.to_camel())
-            } else {
-                format!("{}FunctionInput", name.to_camel())
-            }
+            format!("{}FunctionInput", name.to_camel())
         };
+        
+        let struct_name = if name.starts_with("_") {
+            format!("{f_name}Ext")
+        } else {
+            f_name
+        };
+      
         let model = self.generate_model(&struct_name, inputs.clone());
 
         if !self.generated_structs.contains_key(&struct_name) {
@@ -248,7 +247,7 @@ impl StructGenerator {
         } else {
             format!("{}FunctionOutput", name.to_camel())
         };
-        
+
         let model = self.generate_model(&struct_name, outputs.clone());
         if !self.generated_structs.contains_key(&struct_name) {
             self.generated_structs

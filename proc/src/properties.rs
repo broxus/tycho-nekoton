@@ -4,7 +4,7 @@ use case::CaseExt;
 pub enum StructProperty {
     Simple {
         name: Option<String>,
-        type_name: syn::Type,
+        type_name: Box<syn::Type>,
     },
     Tuple {
         name: String,
@@ -28,7 +28,7 @@ pub enum StructProperty {
 impl StructProperty {
     pub fn type_name_quote(&self) -> syn::Type {
         match self {
-            StructProperty::Simple { type_name, .. } => type_name.clone(),
+            StructProperty::Simple { type_name, .. } => *type_name.clone(),
             StructProperty::Tuple { name, .. } => syn::parse_str(&name.to_camel()).unwrap(),
             StructProperty::Array { internal, .. } => {
                 let ty = internal.type_name_quote();

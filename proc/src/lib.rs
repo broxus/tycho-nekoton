@@ -6,8 +6,8 @@ use quote::quote;
 use std::fs;
 use std::path::Path;
 use syn::parse::{Parse, ParseStream};
-use syn::{LitStr, Result};
 use syn::{parse_macro_input, ItemMod};
+use syn::{LitStr, Result};
 
 use crate::generator::{FunctionDescriptionTokens, StructGenerator};
 
@@ -38,21 +38,19 @@ pub fn abi(params: TokenStream, input: TokenStream) -> TokenStream {
         .parent()
         .expect("project root dir not found");
 
-    println!("macro root: {root:?}");
-    let file_path = root.join(&params.path.value());
-    println!("file path: {file_path:?}");
-    
-    
+    println!("nekoton-proc: macro root {root:?}");
+    let file_path = root.join(params.path.value());
+    println!("nekoton-proc: Full file path {file_path:?}");
+
     let content = match fs::read_to_string(&file_path) {
         Ok(content) => content,
-        Err(e) => panic!("Failed to read file by specified path. Error: {e:?}")
+        Err(e) => panic!("Failed to read file by specified path. Error: {e:?}"),
     };
-    
+
     let contract = match serde_json::from_str::<Contract>(&content) {
         Ok(contract) => contract,
         Err(e) => panic!("Failed to load contract from json. Error: {e:?}"),
     };
-    
 
     let input = parse_macro_input!(input as ItemMod);
     let mod_name = &input.ident;
