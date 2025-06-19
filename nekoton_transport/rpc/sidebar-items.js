@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["RpcTransport"]};
+window.SIDEBAR_ITEMS = {"struct":["RpcTransport","TransportOptions"]};
