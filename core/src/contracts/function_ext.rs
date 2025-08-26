@@ -1,6 +1,7 @@
 use num_traits::cast::ToPrimitive;
 use tycho_executor::ParsedConfig;
 use tycho_types::abi::{AbiType, AbiValue, Function, NamedAbiValue};
+use tycho_types::cell::HashBytes;
 use tycho_types::models::{Account, RelaxedMsgInfo};
 use tycho_types::num::Tokens;
 use tycho_vm::OwnedCellSlice;
@@ -79,6 +80,7 @@ impl FunctionExt for Function {
             return Ok(ExecutionOutput {
                 values: vec![],
                 exit_code: !compute_phase_result.exit_code,
+                missing_library: compute_phase_result.missing_library,
             });
         }
 
@@ -130,6 +132,7 @@ impl FunctionExt for Function {
         Ok(ExecutionOutput {
             values: output,
             exit_code: !compute_phase_result.exit_code,
+            missing_library: compute_phase_result.missing_library,
         })
     }
 }
@@ -138,4 +141,5 @@ impl FunctionExt for Function {
 pub struct ExecutionOutput {
     pub values: Vec<NamedAbiValue>,
     pub exit_code: i32,
+    pub missing_library: Option<HashBytes>,
 }

@@ -154,6 +154,27 @@ impl JrpcClient {
             }
         }
     }
+
+    pub async fn get_library_cell(&self, hash: &HashBytes) -> Result<Option<Cell>> {
+        #[derive(Serialize)]
+        struct Params<'a> {
+            #[serde(default, with = "serde_hex_array")]
+            hash: &'a HashBytes,
+        }
+        let params = JrpcRequest {
+            method: "getLibraryCell",
+            params: &Params { hash },
+        };
+
+        #[derive(Deserialize)]
+        struct LibraryCellResponse {
+            #[serde(with = "Boc")]
+            cell: Option<Cell>,
+        }
+
+        let res = self.post::<_, LibraryCellResponse>(&params).await?;
+        Ok(res.cell)
+    }
 }
 
 struct JrpcRequest<'a, T> {

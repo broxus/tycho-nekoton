@@ -7,7 +7,7 @@ use nekoton_core::transport::Connection;
 use nekoton_utils::time::Timings;
 use parking_lot::Mutex;
 use reqwest::Url;
-use tycho_types::cell::HashBytes;
+use tycho_types::cell::{Cell, HashBytes};
 use tycho_types::models::{OwnedMessage, StdAddr, Transaction};
 
 use crate::rpc::jrpc_client;
@@ -86,6 +86,13 @@ impl RpcConnection {
     ) -> Result<Option<Transaction>> {
         match &self.rpc_type {
             RpcType::Jrpc(jrpc_client) => jrpc_client.get_transaction(hash_bytes).await,
+            RpcType::Proto => todo!(),
+        }
+    }
+
+    pub(crate) async fn get_library_cell(&self, hash_bytes: &HashBytes) -> Result<Option<Cell>> {
+        match &self.rpc_type {
+            RpcType::Jrpc(jrpc_client) => jrpc_client.get_library_cell(hash_bytes).await,
             RpcType::Proto => todo!(),
         }
     }

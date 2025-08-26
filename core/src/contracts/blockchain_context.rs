@@ -7,10 +7,12 @@ use nekoton_utils::time::{Clock, SimpleClock};
 use num_bigint::BigInt;
 use tycho_executor::ExecutorParams;
 use tycho_types::abi::{Function, NamedAbiValue};
+use tycho_types::cell::HashBytes;
 use tycho_types::crc::crc_16;
+use tycho_types::dict::Dict;
 use tycho_types::models::{
-    Account, BlockchainConfig, ExtInMsgInfo, IntAddr, IntMsgInfo, MsgInfo, OwnedMessage, StdAddr,
-    Transaction,
+    Account, BlockchainConfig, ExtInMsgInfo, IntAddr, IntMsgInfo, LibDescr, MsgInfo, OwnedMessage,
+    StdAddr, Transaction,
 };
 use tycho_types::prelude::{Cell, CellBuilder, CellFamily, DynCell};
 use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
@@ -144,6 +146,18 @@ impl BlockchainAccount {
             .build()?;
 
         local_vm.call_getter(gen_utime, gen_lt, &self.account, stack_values)
+    }
+    pub fn add_library(&mut self, library: HashBytes, cell: Cell) -> Result<(), ExecutionError> {
+        let mut publishers = Dict::<HashBytes, ()>::default();
+        publishers.set(HashBytes::ZERO, ())?;
+        self.context.desc.executor_params.libraries.set(
+            library,
+            LibDescr {
+                lib: cell,
+                publishers,
+            },
+        )?;
+        Ok(())
     }
 }
 
