@@ -3,7 +3,7 @@ use crate::models::{ContractState, LastTransactionId, LatestBlockchainConfig};
 use nekoton_utils::time::{Clock, SimpleClock, Timings};
 use std::collections::HashMap;
 use tycho_executor::{ExecutorParams, ParsedConfig};
-use tycho_types::cell::HashBytes;
+use tycho_types::cell::{Cell, HashBytes};
 use tycho_types::models::{
     BlockchainConfig, MsgInfo, OwnedMessage, ShardAccount, StdAddr, Transaction,
 };
@@ -19,6 +19,7 @@ pub trait Transport: Send + Sync {
     ) -> anyhow::Result<ContractState>;
     async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig>;
     async fn get_transaction(&self, hash: &HashBytes) -> anyhow::Result<Option<Transaction>>;
+    async fn get_library_cell(&self, hash: &HashBytes) -> anyhow::Result<Option<Cell>>;
     async fn get_dst_transaction(
         &self,
         message_hash: &HashBytes,
@@ -135,6 +136,9 @@ impl Transport for SimpleTransport {
     }
 
     async fn get_transaction(&self, _: &HashBytes) -> anyhow::Result<Option<Transaction>> {
+        todo!()
+    }
+    async fn get_library_cell(&self, _: &HashBytes) -> anyhow::Result<Option<Cell>> {
         todo!()
     }
 

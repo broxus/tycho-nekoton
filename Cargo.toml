@@ -48,6 +48,9 @@ nekoton-transport = { path = "./transport" }
 nekoton-utils = { path = "./utils" }
 nekoton-proc =  { path = "./proc" }
 
-#[patch.crates-io]
+[patch.crates-io]
+tycho-executor = { git = "https://github.com/broxus/tycho-vm.git", branch = "feature/missing-libraries"}
+tycho-types = { git = "https://github.com/broxus/tycho-types.git", rev = "a34d8bf9f6efff73eba40292f43e26f35f64105e" }
+
 #everscale-types = { git = "https://github.com/broxus/everscale-types.git" }
 

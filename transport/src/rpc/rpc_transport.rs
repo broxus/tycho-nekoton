@@ -9,7 +9,7 @@ use nekoton_core::transport::{Connection, Transport};
 use parking_lot::RwLock;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use tycho_types::cell::HashBytes;
+use tycho_types::cell::{Cell, HashBytes};
 use tycho_types::models::{OwnedMessage, StdAddr, Transaction};
 use tycho_types::prelude::CellBuilder;
 
@@ -206,6 +206,11 @@ impl Transport for RpcTransport {
 
     async fn get_transaction(&self, hash: &HashBytes) -> anyhow::Result<Option<Transaction>> {
         self.with_retries(|instance| async move { instance.get_transaction(hash).await })
+            .await
+    }
+
+    async fn get_library_cell(&self, hash: &HashBytes) -> anyhow::Result<Option<Cell>> {
+        self.with_retries(|instance| async move { instance.get_library_cell(hash).await })
             .await
     }
 

@@ -1,4 +1,4 @@
-use tycho_types::cell::{Cell, CellBuilder};
+use tycho_types::cell::{Cell, CellBuilder, HashBytes};
 use tycho_types::models::{
     Account, ComputePhase, IntAddr, MsgType, OutAction, OutActionsRevIter, OwnedMessage,
     OwnedRelaxedMessage, ShardAccount, Transaction,
@@ -6,7 +6,7 @@ use tycho_types::models::{
 use tycho_types::prelude::{CellFamily, Store};
 
 use tycho_executor::phase::{ComputePhaseContext, TransactionInput};
-use tycho_executor::{ExecutorParams, ParsedConfig};
+use tycho_executor::{ExecutorInspector, ExecutorParams, ParsedConfig};
 use tycho_types::num::Tokens;
 use tycho_vm::OwnedCellSlice;
 
@@ -16,6 +16,7 @@ pub struct ComputePhaseResult {
     pub exit_code: i32,
     pub success: bool,
     pub out_messages: Vec<OwnedRelaxedMessage>,
+    pub missing_library: Option<HashBytes>,
 }
 #[allow(clippy::too_many_arguments)]
 pub fn execute_message(
@@ -37,11 +38,13 @@ pub fn execute_message(
     let mut state = executor.begin(std_addr, Some(account.clone()))?;
     let received_message = state.receive_in_msg(in_msg_cell)?;
 
+    let mut inspector = ExecutorInspector::default();
+
     let compute_phase_result = state.compute_phase(ComputePhaseContext {
         input: TransactionInput::Ordinary(&received_message),
         storage_fee: Tokens::ZERO,
         force_accept: true,
-        inspector: None,
+        inspector: Some(&mut inspector),
     })?;
 
     let executed_compute_phase = match compute_phase_result.compute_phase {
@@ -66,6 +69,7 @@ pub fn execute_message(
         exit_code: !executed_compute_phase.exit_code,
         success: executed_compute_phase.success,
         out_messages: msgs,
+        missing_library: inspector.missing_library,
     })
 }
 
