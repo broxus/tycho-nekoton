@@ -4,13 +4,10 @@
 
 ## About
 
-Broxus SDK
+Broxus SDK using (tycho-types)[https://github.com/broxus/tycho-types] 
 
 ## Usage
 
-```bash
-cargo add nekoton
-```
 
 ### Prerequisites
 
