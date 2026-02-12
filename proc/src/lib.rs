@@ -6,8 +6,8 @@ use std::fs;
 use std::path::Path;
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_macro_input, ItemMod};
-use tycho_types::abi::{AbiHeaderType, Contract};
 use syn::{LitStr, Result};
+use tycho_types::abi::{AbiHeaderType, Contract};
 
 use crate::generator::{FunctionDescriptionTokens, StructGenerator};
 

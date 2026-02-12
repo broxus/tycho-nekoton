@@ -220,13 +220,13 @@ impl StructGenerator {
         } else {
             format!("{}FunctionInput", name.to_camel())
         };
-        
+
         let struct_name = if name.starts_with("_") {
             format!("{f_name}Ext")
         } else {
             f_name
         };
-      
+
         let model = self.generate_model(&struct_name, inputs.clone());
 
         if !self.generated_structs.contains_key(&struct_name) {
@@ -432,6 +432,10 @@ impl StructGenerator {
                 }
             }
             AbiType::Ref(a) => self.make_struct_property(name, a.as_ref()),
+            AbiType::AddressStd => StructProperty::Simple {
+                name,
+                type_name: syn::parse_quote!(tycho_types::models::message::StdAddr),
+            },
         }
     }
 }
@@ -541,6 +545,12 @@ fn quote_abi_type(ty: &AbiType) -> proc_macro2::TokenStream {
             let ty = quote_abi_type(ty);
             quote! {
                 tycho_types::abi::AbiType::Ref(std::sync::Arc<#ty>)
+            }
+        }
+        AbiType::AddressStd => {
+            let ty: syn::Type = syn::parse_quote!(tycho_types::abi::AbiType::AddressStd);
+            quote! {
+                #ty
             }
         }
     };

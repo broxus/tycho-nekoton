@@ -20,7 +20,7 @@ members = [
 anyhow = "1.0"
 async-trait = "0.1"
 ed25519-dalek = "2.1"
-tycho-types = { version = "0.2", features = ["tycho", "abi"] }
+tycho-types = { version = "0.3.2", features = ["tycho", "abi"] }
 futures-util = "0.3"
 hex = { version = "0.4" }
 num-bigint = "0.4.6"
@@ -39,8 +39,8 @@ proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
 
-tycho-executor = "0.2"
-tycho-vm = "0.2"
+tycho-executor = "0.3.2"
+tycho-vm = "0.3.2"
 
 # local deps
 nekoton-core = { path = "./core" }
@@ -48,6 +48,6 @@ nekoton-transport = { path = "./transport" }
 nekoton-utils = { path = "./utils" }
 nekoton-proc =  { path = "./proc" }
 
-#[patch.crates-io]
-#everscale-types = { git = "https://github.com/broxus/everscale-types.git" }
 
+#[patch.crates-io]
+#tycho-types = { git = "https://github.com/broxus/tycho-types.git", rev = "f9e5dbe1222ee51f3e4f5a6836f95a515dd6cdf1" }
