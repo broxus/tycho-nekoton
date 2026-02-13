@@ -81,6 +81,10 @@ pub struct BlockchainDesc {
 }
 
 impl BlockchainAccount {
+    pub fn new(context: BlockchainContext, account: Account) -> Self {
+        Self { context, account }
+    }
+
     pub fn run_local(
         &mut self,
         function: &Function,
