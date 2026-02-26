@@ -50,26 +50,27 @@
 <a href=#50 id=50 data-nosnippet>50</a>    }
 <a href=#51 id=51 data-nosnippet>51</a>}
 <a href=#52 id=52 data-nosnippet>52</a>
-<a href=#53 id=53 data-nosnippet>53</a><span class="kw">pub struct </span>ToVerify {
-<a href=#54 id=54 data-nosnippet>54</a>    <span class="kw">pub </span>ctx: SignatureContext,
-<a href=#55 id=55 data-nosnippet>55</a>    <span class="kw">pub </span>data: Vec&lt;u8&gt;,
-<a href=#56 id=56 data-nosnippet>56</a>}
-<a href=#57 id=57 data-nosnippet>57</a>
-<a href=#58 id=58 data-nosnippet>58</a><span class="kw">impl </span>ToVerify {
-<a href=#59 id=59 data-nosnippet>59</a>    <span class="kw">pub fn </span>prepare(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
-<a href=#60 id=60 data-nosnippet>60</a>        <span class="kw">let </span><span class="kw-2">mut </span>output = Vec::new();
-<a href=#61 id=61 data-nosnippet>61</a>        <span class="kw">match </span><span class="self">self</span>.ctx {
-<a href=#62 id=62 data-nosnippet>62</a>            SignatureContext::SignatureId(global_id) =&gt; {
-<a href=#63 id=63 data-nosnippet>63</a>                output.extend_from_slice(<span class="kw-2">&amp;</span>global_id.to_be_bytes());
-<a href=#64 id=64 data-nosnippet>64</a>            }
-<a href=#65 id=65 data-nosnippet>65</a>            SignatureContext::SignatureDomain(global_id) =&gt; {
-<a href=#66 id=66 data-nosnippet>66</a>                <span class="kw">let </span>hash = SignatureContext::l2_hash(global_id);
-<a href=#67 id=67 data-nosnippet>67</a>                output.extend_from_slice(<span class="kw-2">&amp;</span>hash);
-<a href=#68 id=68 data-nosnippet>68</a>            }
-<a href=#69 id=69 data-nosnippet>69</a>            <span class="kw">_ </span>=&gt; {}
-<a href=#70 id=70 data-nosnippet>70</a>        }
-<a href=#71 id=71 data-nosnippet>71</a>        output.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.data);
-<a href=#72 id=72 data-nosnippet>72</a>        output
-<a href=#73 id=73 data-nosnippet>73</a>    }
-<a href=#74 id=74 data-nosnippet>74</a>}
+<a href=#53 id=53 data-nosnippet>53</a><span class="attr">#[derive(Debug)]
+<a href=#54 id=54 data-nosnippet>54</a></span><span class="kw">pub struct </span>ToVerify {
+<a href=#55 id=55 data-nosnippet>55</a>    <span class="kw">pub </span>ctx: SignatureContext,
+<a href=#56 id=56 data-nosnippet>56</a>    <span class="kw">pub </span>data: Vec&lt;u8&gt;,
+<a href=#57 id=57 data-nosnippet>57</a>}
+<a href=#58 id=58 data-nosnippet>58</a>
+<a href=#59 id=59 data-nosnippet>59</a><span class="kw">impl </span>ToVerify {
+<a href=#60 id=60 data-nosnippet>60</a>    <span class="kw">pub fn </span>prepare(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
+<a href=#61 id=61 data-nosnippet>61</a>        <span class="kw">let </span><span class="kw-2">mut </span>output = Vec::new();
+<a href=#62 id=62 data-nosnippet>62</a>        <span class="kw">match </span><span class="self">self</span>.ctx {
+<a href=#63 id=63 data-nosnippet>63</a>            SignatureContext::SignatureId(global_id) =&gt; {
+<a href=#64 id=64 data-nosnippet>64</a>                output.extend_from_slice(<span class="kw-2">&amp;</span>global_id.to_be_bytes());
+<a href=#65 id=65 data-nosnippet>65</a>            }
+<a href=#66 id=66 data-nosnippet>66</a>            SignatureContext::SignatureDomain(global_id) =&gt; {
+<a href=#67 id=67 data-nosnippet>67</a>                <span class="kw">let </span>hash = SignatureContext::l2_hash(global_id);
+<a href=#68 id=68 data-nosnippet>68</a>                output.extend_from_slice(<span class="kw-2">&amp;</span>hash);
+<a href=#69 id=69 data-nosnippet>69</a>            }
+<a href=#70 id=70 data-nosnippet>70</a>            <span class="kw">_ </span>=&gt; {}
+<a href=#71 id=71 data-nosnippet>71</a>        }
+<a href=#72 id=72 data-nosnippet>72</a>        output.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.data);
+<a href=#73 id=73 data-nosnippet>73</a>        output
+<a href=#74 id=74 data-nosnippet>74</a>    }
+<a href=#75 id=75 data-nosnippet>75</a>}
 </code></pre></div></section></main></body></html>
