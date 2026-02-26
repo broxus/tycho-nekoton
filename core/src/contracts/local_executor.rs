@@ -41,6 +41,7 @@ pub fn execute_message(
         input: TransactionInput::Ordinary(&received_message),
         storage_fee: Tokens::ZERO,
         force_accept: true,
+        stop_on_accept: false,
         inspector: None,
     })?;
 

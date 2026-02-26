@@ -39,8 +39,8 @@ proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
 
-tycho-executor = "0.3.2"
-tycho-vm = "0.3.2"
+tycho-executor = "0.3.3"
+tycho-vm = "0.3.3"
 
 # local deps
 nekoton-core = { path = "./core" }
@@ -49,5 +49,6 @@ nekoton-utils = { path = "./utils" }
 nekoton-proc =  { path = "./proc" }
 
 
-#[patch.crates-io]
-#tycho-types = { git = "https://github.com/broxus/tycho-types.git", rev = "f9e5dbe1222ee51f3e4f5a6836f95a515dd6cdf1" }
+[patch.crates-io]
+tycho-vm = {git = "https://github.com/broxus/tycho-vm.git"}
+tycho-executor = {git = "https://github.com/broxus/tycho-vm.git"}

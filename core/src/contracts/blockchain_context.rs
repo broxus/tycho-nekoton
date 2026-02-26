@@ -1,23 +1,21 @@
 use std::sync::Arc;
 
 use crate::error::ExecutionError;
-use crate::models::{ContractState, GenTimings};
+use crate::models::ContractState;
 use crate::transport::Transport;
 use nekoton_utils::time::{Clock, SimpleClock};
-use num_bigint::BigInt;
 use tycho_executor::ExecutorParams;
 use tycho_types::abi::{Function, NamedAbiValue};
-use tycho_types::crc::crc_16;
 use tycho_types::models::{
     Account, BlockchainConfig, ExtInMsgInfo, IntAddr, IntMsgInfo, MsgInfo, OwnedMessage, StdAddr,
     Transaction,
 };
 use tycho_types::prelude::{Cell, CellBuilder, CellFamily, DynCell};
-use tycho_vm::{BehaviourModifiers, OwnedCellSlice, RcStackValue, SafeRc};
+use tycho_vm::{
+    OwnedCellSlice, RcStackValue, VmCaller, VmGetterError, VmGetterMethodId, VmGetterOutput,
+};
 
 use super::function_ext::{ExecutionOutput, FunctionExt};
-use super::local_vm::{LocalVmBuilder, VmGetterOutput};
-use super::utils::get_gen_timings;
 
 #[derive(Clone)]
 pub struct BlockchainContext {
@@ -116,9 +114,9 @@ impl BlockchainAccount {
         &self,
         method_id: &M,
         args: &[RcStackValue],
-    ) -> Result<VmGetterOutput, ExecutionError>
+    ) -> Result<VmGetterOutput, VmGetterError>
     where
-        M: AsGetterMethodId + ?Sized,
+        M: VmGetterMethodId + ?Sized,
     {
         self.run_getter_ext(method_id, args)
     }
@@ -127,27 +125,22 @@ impl BlockchainAccount {
         &self,
         method_id: &M,
         args: &[RcStackValue],
-    ) -> Result<VmGetterOutput, ExecutionError>
+    ) -> Result<VmGetterOutput, VmGetterError>
     where
-        M: AsGetterMethodId + ?Sized,
+        M: VmGetterMethodId + ?Sized,
     {
-        let GenTimings { gen_utime, gen_lt } =
-            get_gen_timings(self.context.clock.as_ref(), self.account.last_trans_lt);
         let mut stack_values = Vec::with_capacity(args.len() + 1);
         for i in args {
             stack_values.push(i.clone())
         }
-        stack_values.push(SafeRc::new_dyn_value(BigInt::from(
-            method_id.as_getter_method_id(),
-        )));
 
-        let local_vm = LocalVmBuilder::new()
-            .with_behaviour_modifiers(BehaviourModifiers::default())
-            .with_libraries(self.context.executor_params().libraries.clone())
-            .with_unpacked_config(self.context.desc.config.clone(), gen_utime)?
-            .build()?;
+        let caller = VmCaller {
+            libraries: self.context.executor_params().libraries.clone(),
+            behaviour_modifiers: Default::default(),
+            config: self.context.desc.config.params.clone(),
+        };
 
-        local_vm.call_getter(gen_utime, gen_lt, &self.account, stack_values)
+        caller.call_getter(&self.account, method_id, stack_values)
     }
 }
 
@@ -283,34 +276,5 @@ impl IntoMessageBody for Cell {
 impl IntoMessageBody for OwnedCellSlice {
     fn into_message_body(self) -> anyhow::Result<OwnedCellSlice> {
         Ok(self)
-    }
-}
-
-pub trait AsGetterMethodId {
-    fn as_getter_method_id(&self) -> u32;
-}
-
-impl<T: AsGetterMethodId + ?Sized> AsGetterMethodId for &T {
-    fn as_getter_method_id(&self) -> u32 {
-        T::as_getter_method_id(*self)
-    }
-}
-
-impl<T: AsGetterMethodId + ?Sized> AsGetterMethodId for &mut T {
-    fn as_getter_method_id(&self) -> u32 {
-        T::as_getter_method_id(*self)
-    }
-}
-
-impl AsGetterMethodId for u32 {
-    fn as_getter_method_id(&self) -> u32 {
-        *self
-    }
-}
-
-impl AsGetterMethodId for str {
-    fn as_getter_method_id(&self) -> u32 {
-        let crc = crc_16(self.as_bytes());
-        crc as u32 | 0x10000
     }
 }

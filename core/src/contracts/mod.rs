@@ -1,7 +1,6 @@
 pub mod blockchain_context;
 pub mod function_ext;
 pub mod local_executor;
-pub mod local_vm;
 pub mod utils;
 
 #[cfg(test)]
