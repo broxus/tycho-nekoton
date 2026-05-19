@@ -26,6 +26,7 @@ tokio = { workspace = true }
 # local deps
 nekoton-core = { workspace = true }
 nekoton-utils = { workspace = true }
+prost = "0.14"
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["test-util", "macros"] }

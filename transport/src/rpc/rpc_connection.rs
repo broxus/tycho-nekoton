@@ -10,7 +10,7 @@ use reqwest::Url;
 use tycho_types::cell::HashBytes;
 use tycho_types::models::{OwnedMessage, StdAddr, Transaction};
 
-use crate::rpc::jrpc_client;
+use crate::rpc::{jrpc_client, proto_client};
 
 #[derive(Clone)]
 pub struct RpcConnection {
@@ -22,7 +22,7 @@ pub struct RpcConnection {
 #[derive(Clone)]
 pub enum RpcType {
     Jrpc(jrpc_client::JrpcClient),
-    Proto, //TODO: implement proto
+    Proto(proto_client::ProtoClient),
 }
 
 impl RpcConnection {
@@ -36,7 +36,7 @@ impl RpcConnection {
         } else {
             Self {
                 is_available: Arc::new(AtomicBool::new(true)),
-                rpc_type: RpcType::Proto,
+                rpc_type: RpcType::Proto(proto_client::ProtoClient::new(endpoint, client)),
                 stats: Arc::new(Default::default()),
             }
         }
@@ -44,7 +44,7 @@ impl RpcConnection {
     pub(crate) async fn send_message(&self, message: &OwnedMessage) -> Result<()> {
         match &self.rpc_type {
             RpcType::Jrpc(client) => client.send_message(message).await,
-            RpcType::Proto => todo!(),
+            RpcType::Proto(client) => client.send_message(message).await,
         }
     }
 
@@ -54,7 +54,7 @@ impl RpcConnection {
     ) -> Result<Option<Transaction>> {
         match &self.rpc_type {
             RpcType::Jrpc(client) => client.get_dst_transaction(*hash_bytes).await,
-            RpcType::Proto => todo!(),
+            RpcType::Proto(client) => client.get_dst_transaction(*hash_bytes).await,
         }
     }
 
@@ -69,14 +69,18 @@ impl RpcConnection {
                     .get_contract_state(address, last_transaction_lt)
                     .await
             }
-            RpcType::Proto => todo!(),
+            RpcType::Proto(client) => {
+                client
+                    .get_contract_state(address, last_transaction_lt)
+                    .await
+            }
         }
     }
 
     pub(crate) async fn get_config(&self) -> Result<LatestBlockchainConfig> {
         match &self.rpc_type {
             RpcType::Jrpc(client) => client.get_config().await,
-            RpcType::Proto => todo!(),
+            RpcType::Proto(client) => client.get_config().await,
         }
     }
 
@@ -86,7 +90,7 @@ impl RpcConnection {
     ) -> Result<Option<Transaction>> {
         match &self.rpc_type {
             RpcType::Jrpc(jrpc_client) => jrpc_client.get_transaction(hash_bytes).await,
-            RpcType::Proto => todo!(),
+            RpcType::Proto(client) => client.get_transaction(hash_bytes).await,
         }
     }
 
@@ -159,7 +163,7 @@ impl Connection for RpcConnection {
     fn endpoint(&self) -> &str {
         match &self.rpc_type {
             RpcType::Jrpc(client) => client.endpoint(),
-            RpcType::Proto => todo!(),
+            RpcType::Proto(client) => client.endpoint(),
         }
     }
 
@@ -187,7 +191,15 @@ impl Connection for RpcConnection {
                     self.force_update_is_alive(false);
                 }
             },
-            RpcType::Proto => todo!(),
+            RpcType::Proto(client) => match client.get_timings().await {
+                Ok(timings) => {
+                    self.force_update_is_alive(true);
+                    self.set_stats(Some(timings));
+                }
+                Err(_) => {
+                    self.force_update_is_alive(false);
+                }
+            },
         }
     }
 }

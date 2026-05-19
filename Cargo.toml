@@ -2,7 +2,7 @@
 version = "0.0.2"
 edition = "2021"
 authors = ["Broxus Team"]
-rust-version = "1.80.0"
+rust-version = "1.88.0"
 repository = "https://github.com/broxus/tycho-nekoton"
 license = "MIT"
 
@@ -20,7 +20,7 @@ members = [
 anyhow = "1.0"
 async-trait = "0.1"
 ed25519-dalek = "2.1"
-tycho-types = { version = "0.3.2", features = ["tycho", "abi"] }
+tycho-types = { version = "0.3.4", features = ["tycho", "abi"] }
 futures-util = "0.3"
 hex = { version = "0.4" }
 num-bigint = "0.4.6"
@@ -40,16 +40,11 @@ proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
 
-tycho-executor = "0.3.3"
-tycho-vm = "0.3.3"
+tycho-executor = "0.3.6"
+tycho-vm = "0.3.6"
 
 # local deps
 nekoton-core = { path = "./core" }
 nekoton-transport = { path = "./transport" }
 nekoton-utils = { path = "./utils" }
 nekoton-proc =  { path = "./proc" }
-
-
-[patch.crates-io]
-tycho-vm = {git = "https://github.com/broxus/tycho-vm.git"}
-tycho-executor = {git = "https://github.com/broxus/tycho-vm.git"}

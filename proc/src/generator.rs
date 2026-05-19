@@ -513,6 +513,13 @@ fn quote_abi_type(ty: &AbiType) -> proc_macro2::TokenStream {
                         #ty
                     }
                 }
+                PlainAbiType::AddressStd => {
+                    let ty: syn::Type =
+                        syn::parse_quote!(tycho_types::abi::PlainAbiType::AddressStd);
+                    quote! {
+                        #ty
+                    }
+                }
                 PlainAbiType::Bool => {
                     let ty: syn::Type = syn::parse_quote!(tycho_types::abi::PlainAbiType::Bool);
                     quote! {
@@ -527,6 +534,11 @@ fn quote_abi_type(ty: &AbiType) -> proc_macro2::TokenStream {
                 PlainAbiType::Int(value) => {
                     quote! {
                         tycho_types::abi::PlainAbiType::Int(#value)
+                    }
+                }
+                PlainAbiType::FixedBytes(size) => {
+                    quote! {
+                        tycho_types::abi::PlainAbiType::FixedBytes(#size)
                     }
                 }
             };

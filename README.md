@@ -11,7 +11,7 @@ Broxus SDK using (tycho-types)[https://github.com/broxus/tycho-types]
 
 ### Prerequisites
 
-- Rust 1.80+
+- Rust 1.88+
 
 ## Contributing
 
