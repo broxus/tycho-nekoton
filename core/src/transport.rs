@@ -3,9 +3,9 @@ use crate::models::{ContractState, LastTransactionId, LatestBlockchainConfig};
 use nekoton_utils::time::{Clock, SimpleClock, Timings};
 use std::collections::HashMap;
 use tycho_executor::{ExecutorParams, ParsedConfig};
-use tycho_types::cell::HashBytes;
+use tycho_types::cell::{Cell, HashBytes};
 use tycho_types::models::{
-    BlockchainConfig, MsgInfo, OwnedMessage, ShardAccount, StdAddr, Transaction,
+    Block, BlockchainConfig, MsgInfo, OwnedMessage, ShardAccount, StdAddr, Transaction,
 };
 
 #[async_trait::async_trait]
@@ -18,6 +18,36 @@ pub trait Transport: Send + Sync {
         last_transaction_lt: Option<u64>,
     ) -> anyhow::Result<ContractState>;
     async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig>;
+    async fn get_capabilities(&self) -> anyhow::Result<Vec<String>> {
+        anyhow::bail!("transport does not support RPC capabilities")
+    }
+
+    async fn get_latest_key_block(&self) -> anyhow::Result<Block> {
+        anyhow::bail!("transport does not support latest key block")
+    }
+
+    async fn get_library_cell(&self, _hash: &HashBytes) -> anyhow::Result<Option<Cell>> {
+        anyhow::bail!("transport does not support library cell lookup")
+    }
+
+    async fn get_transactions(
+        &self,
+        _address: &StdAddr,
+        _last_transaction_lt: Option<u64>,
+        _limit: u8,
+    ) -> anyhow::Result<Vec<Transaction>> {
+        anyhow::bail!("transport does not support transaction history")
+    }
+
+    async fn get_accounts_by_code_hash(
+        &self,
+        _code_hash: &HashBytes,
+        _continuation: Option<&StdAddr>,
+        _limit: u8,
+    ) -> anyhow::Result<Vec<StdAddr>> {
+        anyhow::bail!("transport does not support code hash scans")
+    }
+
     async fn get_transaction(&self, hash: &HashBytes) -> anyhow::Result<Option<Transaction>>;
     async fn get_dst_transaction(
         &self,

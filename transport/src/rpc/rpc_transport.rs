@@ -9,8 +9,8 @@ use nekoton_core::transport::{Connection, Transport};
 use parking_lot::RwLock;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use tycho_types::cell::HashBytes;
-use tycho_types::models::{OwnedMessage, StdAddr, Transaction};
+use tycho_types::cell::{Cell, HashBytes};
+use tycho_types::models::{Block, OwnedMessage, StdAddr, Transaction};
 use tycho_types::prelude::CellBuilder;
 
 use crate::options::BlockchainOptions;
@@ -202,6 +202,49 @@ impl Transport for RpcTransport {
     async fn get_config(&self) -> anyhow::Result<LatestBlockchainConfig> {
         self.with_retries(|instance| async move { instance.get_config().await })
             .await
+    }
+
+    async fn get_capabilities(&self) -> anyhow::Result<Vec<String>> {
+        self.with_retries(|instance| async move { instance.get_capabilities().await })
+            .await
+    }
+
+    async fn get_latest_key_block(&self) -> anyhow::Result<Block> {
+        self.with_retries(|instance| async move { instance.get_latest_key_block().await })
+            .await
+    }
+
+    async fn get_library_cell(&self, hash: &HashBytes) -> anyhow::Result<Option<Cell>> {
+        self.with_retries(|instance| async move { instance.get_library_cell(hash).await })
+            .await
+    }
+
+    async fn get_transactions(
+        &self,
+        address: &StdAddr,
+        last_transaction_lt: Option<u64>,
+        limit: u8,
+    ) -> anyhow::Result<Vec<Transaction>> {
+        self.with_retries(|instance| async move {
+            instance
+                .get_transactions(address, last_transaction_lt, limit)
+                .await
+        })
+        .await
+    }
+
+    async fn get_accounts_by_code_hash(
+        &self,
+        code_hash: &HashBytes,
+        continuation: Option<&StdAddr>,
+        limit: u8,
+    ) -> anyhow::Result<Vec<StdAddr>> {
+        self.with_retries(|instance| async move {
+            instance
+                .get_accounts_by_code_hash(code_hash, continuation, limit)
+                .await
+        })
+        .await
     }
 
     async fn get_transaction(&self, hash: &HashBytes) -> anyhow::Result<Option<Transaction>> {

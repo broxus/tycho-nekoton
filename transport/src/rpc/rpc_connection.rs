@@ -7,8 +7,8 @@ use nekoton_core::transport::Connection;
 use nekoton_utils::time::Timings;
 use parking_lot::Mutex;
 use reqwest::Url;
-use tycho_types::cell::HashBytes;
-use tycho_types::models::{OwnedMessage, StdAddr, Transaction};
+use tycho_types::cell::{Cell, HashBytes};
+use tycho_types::models::{Block, OwnedMessage, StdAddr, Transaction};
 
 use crate::rpc::{jrpc_client, proto_client};
 
@@ -81,6 +81,67 @@ impl RpcConnection {
         match &self.rpc_type {
             RpcType::Jrpc(client) => client.get_config().await,
             RpcType::Proto(client) => client.get_config().await,
+        }
+    }
+
+    pub(crate) async fn get_capabilities(&self) -> Result<Vec<String>> {
+        match &self.rpc_type {
+            RpcType::Jrpc(client) => client.get_capabilities().await,
+            RpcType::Proto(client) => client.get_capabilities().await,
+        }
+    }
+
+    pub(crate) async fn get_latest_key_block(&self) -> Result<Block> {
+        match &self.rpc_type {
+            RpcType::Jrpc(client) => client.get_latest_key_block().await,
+            RpcType::Proto(client) => client.get_latest_key_block().await,
+        }
+    }
+
+    pub(crate) async fn get_library_cell(&self, hash: &HashBytes) -> Result<Option<Cell>> {
+        match &self.rpc_type {
+            RpcType::Jrpc(client) => client.get_library_cell(hash).await,
+            RpcType::Proto(client) => client.get_library_cell(hash).await,
+        }
+    }
+
+    pub(crate) async fn get_transactions(
+        &self,
+        address: &StdAddr,
+        last_transaction_lt: Option<u64>,
+        limit: u8,
+    ) -> Result<Vec<Transaction>> {
+        match &self.rpc_type {
+            RpcType::Jrpc(client) => {
+                client
+                    .get_transactions(address, last_transaction_lt, limit)
+                    .await
+            }
+            RpcType::Proto(client) => {
+                client
+                    .get_transactions(address, last_transaction_lt, limit)
+                    .await
+            }
+        }
+    }
+
+    pub(crate) async fn get_accounts_by_code_hash(
+        &self,
+        code_hash: &HashBytes,
+        continuation: Option<&StdAddr>,
+        limit: u8,
+    ) -> Result<Vec<StdAddr>> {
+        match &self.rpc_type {
+            RpcType::Jrpc(client) => {
+                client
+                    .get_accounts_by_code_hash(code_hash, continuation, limit)
+                    .await
+            }
+            RpcType::Proto(client) => {
+                client
+                    .get_accounts_by_code_hash(code_hash, continuation, limit)
+                    .await
+            }
         }
     }
 

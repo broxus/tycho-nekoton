@@ -5,9 +5,9 @@ use nekoton_core::models::{ContractState, GenTimings, LastTransactionId, LatestB
 use nekoton_utils::time::Timings;
 use prost::Message;
 use reqwest::{StatusCode, Url};
-use tycho_types::boc::BocRepr;
+use tycho_types::boc::{Boc, BocRepr};
 use tycho_types::cell::HashBytes;
-use tycho_types::models::{Account, BlockchainConfig, OwnedMessage, StdAddr, Transaction};
+use tycho_types::models::{Account, Block, BlockchainConfig, OwnedMessage, StdAddr, Transaction};
 use tycho_types::prelude::{Cell, Load};
 
 use crate::rpc::proto_rpc as rpc;
@@ -145,6 +145,102 @@ impl ProtoClient {
         }
     }
 
+    pub async fn get_capabilities(&self) -> Result<Vec<String>> {
+        let request = rpc::Request {
+            call: Some(rpc::request::Call::GetCapabilities(rpc::Empty {})),
+        };
+
+        let response = self.post::<_, rpc::Response>(request).await?;
+        match response.result {
+            Some(rpc::response::Result::GetCapabilities(response)) => Ok(response.capabilities),
+            _ => anyhow::bail!("invalid protobuf response for getCapabilities"),
+        }
+    }
+
+    pub async fn get_latest_key_block(&self) -> Result<Block> {
+        let request = rpc::Request {
+            call: Some(rpc::request::Call::GetLatestKeyBlock(rpc::Empty {})),
+        };
+
+        let response = self.post::<_, rpc::Response>(request).await?;
+        match response.result {
+            Some(rpc::response::Result::GetLatestKeyBlock(response)) => {
+                BocRepr::decode(response.block.as_ref()).context("failed to decode key block boc")
+            }
+            _ => anyhow::bail!("invalid protobuf response for getLatestKeyBlock"),
+        }
+    }
+
+    pub async fn get_library_cell(&self, hash: &HashBytes) -> Result<Option<Cell>> {
+        let request = rpc::Request {
+            call: Some(rpc::request::Call::GetLibraryCell(
+                rpc::request::GetLibraryCell {
+                    hash: hash.as_slice().to_vec().into(),
+                },
+            )),
+        };
+
+        let response = self.post::<_, rpc::Response>(request).await?;
+        match response.result {
+            Some(rpc::response::Result::GetLibraryCell(response)) => {
+                response.cell.map(decode_cell).transpose()
+            }
+            _ => anyhow::bail!("invalid protobuf response for getLibraryCell"),
+        }
+    }
+
+    pub async fn get_transactions(
+        &self,
+        address: &StdAddr,
+        last_transaction_lt: Option<u64>,
+        limit: u8,
+    ) -> Result<Vec<Transaction>> {
+        let request = rpc::Request {
+            call: Some(rpc::request::Call::GetTransactionsList(
+                rpc::request::GetTransactionsList {
+                    account: addr_to_bytes(address),
+                    last_transaction_lt,
+                    limit: u32::from(limit),
+                },
+            )),
+        };
+
+        let response = self.post::<_, rpc::Response>(request).await?;
+        match response.result {
+            Some(rpc::response::Result::GetTransactionsList(response)) => response
+                .transactions
+                .into_iter()
+                .map(decode_transaction)
+                .collect(),
+            _ => anyhow::bail!("invalid protobuf response for getTransactionsList"),
+        }
+    }
+
+    pub async fn get_accounts_by_code_hash(
+        &self,
+        code_hash: &HashBytes,
+        continuation: Option<&StdAddr>,
+        limit: u8,
+    ) -> Result<Vec<StdAddr>> {
+        let request = rpc::Request {
+            call: Some(rpc::request::Call::GetAccountsByCodeHash(
+                rpc::request::GetAccountsByCodeHash {
+                    code_hash: code_hash.as_slice().to_vec().into(),
+                    continuation: continuation.map(addr_to_bytes),
+                    limit: u32::from(limit),
+                },
+            )),
+        };
+
+        let response = self.post::<_, rpc::Response>(request).await?;
+        match response.result {
+            Some(rpc::response::Result::GetAccounts(response)) => {
+                response.account.into_iter().map(addr_from_bytes).collect()
+            }
+            _ => anyhow::bail!("invalid protobuf response for getAccountsByCodeHash"),
+        }
+    }
+
     pub async fn get_transaction(&self, hash: &HashBytes) -> Result<Option<Transaction>> {
         let request = rpc::Request {
             call: Some(rpc::request::Call::GetTransaction(
@@ -166,6 +262,10 @@ impl ProtoClient {
 
 fn decode_transaction(transaction: prost::bytes::Bytes) -> Result<Transaction> {
     BocRepr::decode(transaction.as_ref()).context("failed to decode transaction boc")
+}
+
+fn decode_cell(cell: prost::bytes::Bytes) -> Result<Cell> {
+    Boc::decode(cell.as_ref()).context("failed to decode cell boc")
 }
 
 fn parse_contract_state(response: rpc::response::GetContractState) -> Result<ContractState> {
@@ -265,6 +365,17 @@ fn addr_to_bytes(address: &StdAddr) -> prost::bytes::Bytes {
     bytes.into()
 }
 
+fn addr_from_bytes(address: prost::bytes::Bytes) -> Result<StdAddr> {
+    if address.len() != 33 {
+        anyhow::bail!("invalid account address length")
+    }
+
+    Ok(StdAddr::new(
+        address[0] as i8,
+        HashBytes::from_slice(&address[1..]),
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use prost::bytes::Bytes;
@@ -334,5 +445,22 @@ mod tests {
         assert_eq!(bytes.len(), 33);
         assert_eq!(bytes[0], 255);
         assert_eq!(&bytes[1..], &[3; 32]);
+    }
+
+    #[test]
+    fn decodes_std_addr_from_proto_bytes() {
+        let mut bytes = Vec::with_capacity(33);
+        bytes.push(255);
+        bytes.extend_from_slice(&[3; 32]);
+
+        let address = addr_from_bytes(bytes.into()).unwrap();
+        assert_eq!(address.workchain, -1);
+        assert_eq!(address.address.as_slice(), &[3; 32]);
+    }
+
+    #[test]
+    fn rejects_invalid_std_addr_bytes() {
+        let error = addr_from_bytes(Bytes::from_static(&[1; 32])).unwrap_err();
+        assert!(error.to_string().contains("address length"));
     }
 }

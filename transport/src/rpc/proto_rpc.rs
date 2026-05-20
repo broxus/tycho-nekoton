@@ -3,11 +3,17 @@ pub struct Empty {}
 
 #[derive(Clone, PartialEq, Eq, ::prost::Message)]
 pub struct Request {
-    #[prost(oneof = "request::Call", tags = "3, 5, 6, 7, 8, 11")]
+    #[prost(oneof = "request::Call", tags = "1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12")]
     pub call: ::core::option::Option<request::Call>,
 }
 
 pub mod request {
+    #[derive(Clone, PartialEq, Eq, ::prost::Message)]
+    pub struct GetLibraryCell {
+        #[prost(bytes = "bytes", tag = "1")]
+        pub hash: ::prost::bytes::Bytes,
+    }
+
     #[derive(Clone, PartialEq, Eq, ::prost::Message)]
     pub struct GetContractState {
         #[prost(bytes = "bytes", tag = "1")]
@@ -29,6 +35,26 @@ pub mod request {
     }
 
     #[derive(Clone, PartialEq, Eq, ::prost::Message)]
+    pub struct GetTransactionsList {
+        #[prost(bytes = "bytes", tag = "1")]
+        pub account: ::prost::bytes::Bytes,
+        #[prost(uint64, optional, tag = "2")]
+        pub last_transaction_lt: ::core::option::Option<u64>,
+        #[prost(uint32, tag = "3")]
+        pub limit: u32,
+    }
+
+    #[derive(Clone, PartialEq, Eq, ::prost::Message)]
+    pub struct GetAccountsByCodeHash {
+        #[prost(bytes = "bytes", tag = "1")]
+        pub code_hash: ::prost::bytes::Bytes,
+        #[prost(bytes = "bytes", optional, tag = "2")]
+        pub continuation: ::core::option::Option<::prost::bytes::Bytes>,
+        #[prost(uint32, tag = "3")]
+        pub limit: u32,
+    }
+
+    #[derive(Clone, PartialEq, Eq, ::prost::Message)]
     pub struct SendMessage {
         #[prost(bytes = "bytes", tag = "1")]
         pub message: ::prost::bytes::Bytes,
@@ -36,6 +62,10 @@ pub mod request {
 
     #[derive(Clone, PartialEq, Eq, ::prost::Oneof)]
     pub enum Call {
+        #[prost(message, tag = "1")]
+        GetCapabilities(super::Empty),
+        #[prost(message, tag = "2")]
+        GetLatestKeyBlock(super::Empty),
         #[prost(message, tag = "3")]
         GetBlockchainConfig(super::Empty),
         #[prost(message, tag = "5")]
@@ -46,14 +76,20 @@ pub mod request {
         GetTransaction(GetTransaction),
         #[prost(message, tag = "8")]
         GetDstTransaction(GetDstTransaction),
+        #[prost(message, tag = "9")]
+        GetTransactionsList(GetTransactionsList),
+        #[prost(message, tag = "10")]
+        GetAccountsByCodeHash(GetAccountsByCodeHash),
         #[prost(message, tag = "11")]
         SendMessage(SendMessage),
+        #[prost(message, tag = "12")]
+        GetLibraryCell(GetLibraryCell),
     }
 }
 
 #[derive(Clone, PartialEq, Eq, ::prost::Message)]
 pub struct Response {
-    #[prost(oneof = "response::Result", tags = "1, 3, 7, 9, 10")]
+    #[prost(oneof = "response::Result", tags = "1, 2, 3, 5, 6, 7, 8, 9, 10, 11")]
     pub result: ::core::option::Option<response::Result>,
 }
 
@@ -62,6 +98,12 @@ pub mod response {
     pub struct GetRawTransaction {
         #[prost(bytes = "bytes", optional, tag = "1")]
         pub transaction: ::core::option::Option<::prost::bytes::Bytes>,
+    }
+
+    #[derive(Clone, PartialEq, Eq, ::prost::Message)]
+    pub struct GetTransactionsList {
+        #[prost(bytes = "bytes", repeated, tag = "1")]
+        pub transactions: ::prost::alloc::vec::Vec<::prost::bytes::Bytes>,
     }
 
     #[derive(Clone, PartialEq, Eq, ::prost::Message)]
@@ -74,6 +116,18 @@ pub mod response {
         pub mc_time_diff: i64,
         #[prost(uint64, tag = "6")]
         pub smallest_known_lt: u64,
+    }
+
+    #[derive(Clone, PartialEq, Eq, ::prost::Message)]
+    pub struct GetCapabilities {
+        #[prost(string, repeated, tag = "1")]
+        pub capabilities: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+
+    #[derive(Clone, PartialEq, Eq, ::prost::Message)]
+    pub struct GetLatestKeyBlock {
+        #[prost(bytes = "bytes", tag = "1")]
+        pub block: ::prost::bytes::Bytes,
     }
 
     #[derive(Clone, PartialEq, Eq, ::prost::Message)]
@@ -90,6 +144,18 @@ pub mod response {
     pub struct GetContractState {
         #[prost(oneof = "get_contract_state::State", tags = "1, 2, 3")]
         pub state: ::core::option::Option<get_contract_state::State>,
+    }
+
+    #[derive(Clone, PartialEq, Eq, ::prost::Message)]
+    pub struct GetAccountsByCodeHash {
+        #[prost(bytes = "bytes", repeated, tag = "1")]
+        pub account: ::prost::alloc::vec::Vec<::prost::bytes::Bytes>,
+    }
+
+    #[derive(Clone, PartialEq, Eq, ::prost::Message)]
+    pub struct GetLibraryCell {
+        #[prost(bytes = "bytes", optional, tag = "1")]
+        pub cell: ::core::option::Option<::prost::bytes::Bytes>,
     }
 
     pub mod get_contract_state {
@@ -166,14 +232,24 @@ pub mod response {
     pub enum Result {
         #[prost(message, tag = "1")]
         GetRawTransaction(GetRawTransaction),
+        #[prost(message, tag = "2")]
+        GetTransactionsList(GetTransactionsList),
         #[prost(message, tag = "3")]
         GetTimings(GetTimings),
+        #[prost(message, tag = "5")]
+        GetCapabilities(GetCapabilities),
+        #[prost(message, tag = "6")]
+        GetLatestKeyBlock(GetLatestKeyBlock),
         #[prost(message, tag = "7")]
         GetBlockchainConfig(GetBlockchainConfig),
+        #[prost(message, tag = "8")]
+        GetAccounts(GetAccountsByCodeHash),
         #[prost(message, tag = "9")]
         GetContractState(GetContractState),
         #[prost(message, tag = "10")]
         SendMessage(super::Empty),
+        #[prost(message, tag = "11")]
+        GetLibraryCell(GetLibraryCell),
     }
 }
 

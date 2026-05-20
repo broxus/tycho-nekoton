@@ -7,6 +7,7 @@ use nekoton_utils::serde_helpers::*;
 use nekoton_utils::time::Timings;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use tycho_types::cell::Cell;
 use tycho_types::models::*;
 use tycho_types::prelude::*;
 
@@ -109,6 +110,7 @@ impl JrpcClient {
         last_transaction_lt: Option<u64>,
     ) -> anyhow::Result<ContractState> {
         #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Params<'a> {
             address: &'a StdAddr,
             #[serde(default, with = "serde_optional_u64")]
@@ -129,6 +131,112 @@ impl JrpcClient {
         self.post(&JrpcRequest {
             method: "getBlockchainConfig",
             params: &(),
+        })
+        .await
+    }
+
+    pub async fn get_capabilities(&self) -> Result<Vec<String>> {
+        self.post(&JrpcRequest {
+            method: "getCapabilities",
+            params: &(),
+        })
+        .await
+    }
+
+    pub async fn get_latest_key_block(&self) -> Result<Block> {
+        #[derive(Deserialize)]
+        struct Response {
+            #[serde(with = "BocRepr")]
+            block: Block,
+        }
+
+        let response = self
+            .post::<_, Response>(&JrpcRequest {
+                method: "getLatestKeyBlock",
+                params: &(),
+            })
+            .await?;
+
+        Ok(response.block)
+    }
+
+    pub async fn get_library_cell(&self, hash: &HashBytes) -> Result<Option<Cell>> {
+        #[derive(Serialize)]
+        struct Params<'a> {
+            hash: &'a HashBytes,
+        }
+
+        #[derive(Deserialize)]
+        struct Response {
+            cell: Option<String>,
+        }
+
+        let response = self
+            .post::<_, Response>(&JrpcRequest {
+                method: "getLibraryCell",
+                params: &Params { hash },
+            })
+            .await?;
+
+        response
+            .cell
+            .map(|cell| Boc::decode_base64(cell.as_str()).map_err(Into::into))
+            .transpose()
+    }
+
+    pub async fn get_transactions(
+        &self,
+        address: &StdAddr,
+        last_transaction_lt: Option<u64>,
+        limit: u8,
+    ) -> Result<Vec<Transaction>> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Params<'a> {
+            account: &'a StdAddr,
+            #[serde(default, with = "serde_optional_u64")]
+            last_transaction_lt: Option<u64>,
+            limit: u8,
+        }
+
+        let transactions = self
+            .post::<_, Vec<String>>(&JrpcRequest {
+                method: "getTransactionsList",
+                params: &Params {
+                    account: address,
+                    last_transaction_lt,
+                    limit,
+                },
+            })
+            .await?;
+
+        transactions
+            .iter()
+            .map(|transaction| BocRepr::decode_base64(transaction.as_str()).map_err(Into::into))
+            .collect()
+    }
+
+    pub async fn get_accounts_by_code_hash(
+        &self,
+        code_hash: &HashBytes,
+        continuation: Option<&StdAddr>,
+        limit: u8,
+    ) -> Result<Vec<StdAddr>> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Params<'a> {
+            code_hash: &'a HashBytes,
+            continuation: Option<&'a StdAddr>,
+            limit: u8,
+        }
+
+        self.post(&JrpcRequest {
+            method: "getAccountsByCodeHash",
+            params: &Params {
+                code_hash,
+                continuation,
+                limit,
+            },
         })
         .await
     }
