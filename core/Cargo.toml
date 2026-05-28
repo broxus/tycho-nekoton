@@ -29,3 +29,4 @@ nekoton-utils = { workspace = true }
 
 [dev-dependencies]
 nekoton-proc =  {workspace = true}
+tokio = { workspace = true, features = ["macros", "rt", "time"] }
