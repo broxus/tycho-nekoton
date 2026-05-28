@@ -23,7 +23,8 @@ pub mod tests {
 
         let mut traced_tx = TraceTransaction::new(&hash, Arc::new(rpc_transport));
         let mut counter = 0;
-        while traced_tx.next().await.is_some() {
+        while let Some(step) = traced_tx.next().await {
+            step.unwrap();
             counter += 1;
         }
         assert_eq!(counter, 12);
