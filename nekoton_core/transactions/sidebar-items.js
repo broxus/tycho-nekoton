@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["TransactionTreeError"],"struct":["TraceTransaction","TransactionTreeMessage","TransactionTreeStep","TransactionTreeStream"],"type":["TransactionTreeResult","TransactionsTreeStream"]};
+window.SIDEBAR_ITEMS = {"enum":["TraceTransactionError","TransactionTreeError"],"struct":["TraceMessage","TraceTransaction","TraceTransactionEvent","TraceTransactionPolling","TraceTransactionStep","TransactionTreeMessage","TransactionTreeStep","TransactionTreeStream"],"type":["TraceTransactionResult","TransactionTreeResult","TransactionsTreeStream"]};
